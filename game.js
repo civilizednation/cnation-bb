@@ -294,8 +294,20 @@ function hint(text) {
 }
 
 // ───────────────────────── 손님 ─────────────────────────
+// 최근에 온 손님은 다시 뽑지 않는다 (손님이 적어져도 고를 손님이 최소 1명은 남게)
+const RECENT_CUSTOMERS = 2;
+const recentCustomers = [];
+function pickCustomer() {
+  const keep = Math.min(RECENT_CUSTOMERS, CUSTOMERS.length - 1);
+  const pool = CUSTOMERS.filter((c) => !recentCustomers.slice(-keep).includes(c.id));
+  const def = pool[Math.floor(Math.random() * pool.length)];
+  recentCustomers.push(def.id);
+  if (recentCustomers.length > RECENT_CUSTOMERS) recentCustomers.shift();
+  return def;
+}
+
 function spawnCustomer() {
-  const def = CUSTOMERS[Math.floor(Math.random() * CUSTOMERS.length)];
+  const def = pickCustomer();
   const p = progress();
   const maxNeed = p < 0.3 ? 2 : 3;
   const need = 1 + Math.floor(Math.random() * maxNeed);
