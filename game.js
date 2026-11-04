@@ -47,36 +47,103 @@ window.addEventListener('resize', fit);
 fit();
 
 // ───────────────────────── 소리 ─────────────────────────
-const sfx = {};
-['pour', 'bean', 'flip', 'burn', 'collect', 'bag', 'happy', 'sad', 'bell', 'start'].forEach((name) => {
-  const a = new Audio(SOUND + name + '.mp3');
-  a.preload = 'auto';
-  sfx[name] = a;
-});
-const bgm = {
-  title: Object.assign(new Audio(SOUND + 'bgm-title.mp3'), { loop: true, volume: 0.4 }),
-  game: Object.assign(new Audio(SOUND + 'bgm-game.mp3'), { loop: true, volume: 0.35 }),
-};
+// 효과음은 Web Audio로 미리 풀어 두고 GainNode로 음량을 정한다.
+// iOS Safari는 audio.volume을 무시하고, 매번 <audio>를 복제하면 소리가 늦게 나기 때문이다.
+// 배경음악도 GainNode를 거치게 해서 iOS에서 음량이 맞게 나오도록 한다.
+// Web Audio가 없거나 index.html을 파일로 직접 열었으면(file://) 예전처럼 <audio>로 재생한다.
+const SFX_NAMES = ['pour', 'bean', 'flip', 'burn', 'collect', 'bag', 'happy', 'sad', 'bell', 'start'];
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+const actx = AudioCtx && location.protocol !== 'file:' ? new AudioCtx() : null;
+const sfxBuffers = {};
+const sfxEls = {};
+if (actx) {
+  SFX_NAMES.forEach((name) => {
+    fetch(SOUND + name + '.mp3')
+      .then((r) => r.arrayBuffer())
+      .then((data) => new Promise((ok, fail) => actx.decodeAudioData(data, ok, fail)))
+      .then((buf) => { sfxBuffers[name] = buf; })
+      .catch(() => {});
+  });
+} else {
+  SFX_NAMES.forEach((name) => sfxElement(name));
+}
+function sfxElement(name) {
+  if (!sfxEls[name]) {
+    sfxEls[name] = new Audio(SOUND + name + '.mp3');
+    sfxEls[name].preload = 'auto';
+  }
+  return sfxEls[name];
+}
+
+function makeBgm(name, volume) {
+  const el = new Audio(SOUND + name + '.mp3');
+  el.loop = true;
+  el.preload = 'auto';
+  if (actx) {
+    const src = actx.createMediaElementSource(el);
+    const gain = actx.createGain();
+    gain.gain.value = volume;
+    src.connect(gain);
+    gain.connect(actx.destination);
+  } else {
+    el.volume = volume;
+  }
+  el.addEventListener('playing', () => { if (!actx || actx.state === 'running') markUnlocked(); });
+  return el;
+}
+const bgm = { title: makeBgm('bgm-title', 0.4), game: makeBgm('bgm-game', 0.35) };
 let soundOn = localStorage.getItem('bb-sound') !== 'off';
 let currentBgm = null;
+let audioUnlocked = false;
 
 function play(name, volume = 0.8) {
-  if (!soundOn || !sfx[name]) return;
-  const a = sfx[name].cloneNode();
+  if (!soundOn) return;
+  if (actx && sfxBuffers[name]) {
+    const src = actx.createBufferSource();
+    const gain = actx.createGain();
+    src.buffer = sfxBuffers[name];
+    gain.gain.value = volume;
+    src.connect(gain);
+    gain.connect(actx.destination);
+    src.start();
+    return;
+  }
+  const a = sfxElement(name).cloneNode();   // 아직 풀리지 않았거나 Web Audio가 없을 때
   a.volume = volume;
   a.play().catch(() => {});
 }
-function playBgm(which) {
+// restart: 다른 곡에서 넘어올 때 처음부터 튼다 (같은 곡이 이미 나오고 있으면 그대로 둔다)
+function playBgm(which, restart = false) {
+  const changed = currentBgm !== which;
   currentBgm = which;
   for (const k in bgm) if (k !== which) bgm[k].pause();
-  if (soundOn && which) bgm[which].play().catch(() => {});
+  if (!which) return;
+  if (restart && changed) bgm[which].currentTime = 0;
+  if (soundOn) bgm[which].play().catch(() => {});
 }
 function setSound(on) {
   soundOn = on;
   localStorage.setItem('bb-sound', on ? 'on' : 'off');
   document.getElementById('sound-btn').textContent = on ? '🔊' : '🔇';
   if (on) playBgm(currentBgm); else for (const k in bgm) bgm[k].pause();
+  updateTapHint();
 }
+
+// 모바일은 첫 터치 전에는 소리를 낼 수 없다: 어디든 처음 누르면 소리를 깨운다
+function unlockAudio() {
+  if (actx && actx.state !== 'running') actx.resume().then(markUnlocked).catch(() => {});
+  else markUnlocked();
+}
+function markUnlocked() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  updateTapHint();
+}
+function updateTapHint() {
+  const el = document.getElementById('tap-hint');
+  if (el) el.classList.toggle('hidden', audioUnlocked || !soundOn);
+}
+document.addEventListener('pointerdown', unlockAudio, true);
 
 // ───────────────────────── 화면 요소 ─────────────────────────
 const $ = (id) => document.getElementById(id);
@@ -113,8 +180,10 @@ $('again-btn').addEventListener('click', () => startDay());
 $('help-btn').addEventListener('click', () => $('help').classList.remove('hidden'));
 $('help-close').addEventListener('click', () => $('help').classList.add('hidden'));
 $('home-btn').addEventListener('click', () => showTitle());
-// 모바일은 첫 터치 전에는 소리를 낼 수 없다: 시작 화면을 처음 누르면 시작 화면 음악을 튼다
-$('title').addEventListener('pointerdown', () => { if (bgm.title.paused) playBgm('title'); });
+// 시작 화면을 처음 누르면 시작 화면 음악을 튼다 (시작 버튼은 바로 장사 음악으로 넘어가니 건너뛴다)
+$('title').addEventListener('pointerdown', (e) => {
+  if (!e.target.closest('#start-btn') && bgm.title.paused) playBgm('title');
+});
 
 // ───────────────────────── 게임 상태 ─────────────────────────
 let running = false;
@@ -265,13 +334,15 @@ function startDay() {
   toastUntil = 0;
   selectTool('batter');
   play('start');
-  playBgm('game');
+  playBgm('game', true);
 }
 
 function endDay() {
   running = false;
   play('start');
   playBgm(null);
+  // 마감 소리가 끝나면 정산 화면에 시작 화면 음악을 처음부터 깔아 준다
+  setTimeout(() => { if (!running && currentBgm === null) playBgm('title', true); }, 1200);
   const net = money;
   const best = Math.max(net, Number(localStorage.getItem('bb-best') || 0));
   const isNew = net > 0 && net >= best && net > Number(localStorage.getItem('bb-best') || 0);
@@ -451,7 +522,10 @@ function frame(now) {
 }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { for (const k in bgm) bgm[k].pause(); }
-  else if (currentBgm) playBgm(currentBgm);
+  else {
+    if (actx && actx.state !== 'running') actx.resume().catch(() => {});   // iOS는 돌아오면 멈춰 있다
+    if (currentBgm) playBgm(currentBgm);
+  }
 });
 
 setSound(soundOn);

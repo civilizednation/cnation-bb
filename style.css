@@ -439,4 +439,16 @@ img { -webkit-user-drag: none; }
 .receipt hr { border: 0; border-top: 2px dashed rgba(107, 51, 12, .35); margin: 2px 0; }
 .receipt .total { font-size: 17px; }
 .receipt .total b { font-size: 22px; color: #6b330c; }
+.tap-hint {
+  align-self: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(42, 27, 18, .72);
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff8ea;
+  animation: tap-pulse 1.4s ease-in-out infinite;
+}
+.tap-hint.hidden { display: none; }
+@keyframes tap-pulse { 50% { opacity: .45; } }
 .receipt .best { color: #6b330c; text-shadow: none; text-align: center; }
