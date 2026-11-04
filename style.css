@@ -77,7 +77,7 @@ img { -webkit-user-drag: none; }
   height: 32px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   z-index: 7;
 }
 .pill {
@@ -103,26 +103,30 @@ img { -webkit-user-drag: none; }
   flex: none;
 }
 .pill.money {
-  width: 110px;
-  padding: 0 12px 0 40px;
+  width: 104px;
+  padding: 0 10px 0 36px;
   justify-content: flex-end;
   background-image: url(assets/sprites/money-pill.webp);
 }
 .pill.sold {
-  width: 92px;
-  padding: 0 12px 0 40px;
+  width: 76px;
+  padding: 0 10px 0 34px;
   justify-content: flex-end;
   background-image: url(assets/sprites/bread-pill.webp);
 }
 .round-btn {
-  margin-left: auto;
-  width: 32px; height: 32px;
+  flex: none;
+  width: 28px; height: 28px;
   border-radius: 50%;
   background: rgba(255, 255, 255, .92);
   box-shadow: 0 2px 0 rgba(0, 0, 0, .25);
-  font-size: 16px;
-  line-height: 32px;
+  font-size: 14px;
+  line-height: 28px;
 }
+#pause-btn { margin-left: auto; display: flex; align-items: center; justify-content: center; gap: 3px; }
+#pause-btn i { width: 3.5px; height: 11px; border-radius: 1.5px; background: #6b330c; }
+.pause-panel { width: 260px; text-align: center; }
+.pause-time { font-size: 14px; font-weight: 800; color: #8a4a1d; margin-bottom: 4px; }
 
 /* ───── 손님과 말풍선 ───── */
 #customer {
@@ -298,14 +302,6 @@ img { -webkit-user-drag: none; }
 }
 
 /* ───── 안내 화살표, 알림 ───── */
-#guide {
-  position: absolute;
-  width: 46px;
-  z-index: 8;
-  pointer-events: none;
-  display: none;
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .35));
-}
 #toast {
   position: absolute;
   left: 50%; top: 240px;

@@ -140,7 +140,7 @@ function playBgm(which, restart = false) {
   for (const k in bgm) if (k !== which) bgm[k].pause();
   if (!which) return;
   if (restart && changed) bgm[which].currentTime = 0;
-  if (soundOn) bgm[which].play().catch(() => {});
+  if (soundOn && !paused) bgm[which].play().catch(() => {});   // 일시정지 중에는 틀지 않는다
 }
 function setSound(on) {
   soundOn = on;
@@ -196,6 +196,10 @@ tools.forEach((btn) => btn.addEventListener('pointerdown', (e) => {
 }));
 $('bag').addEventListener('pointerdown', (e) => { e.preventDefault(); onBag(); });
 $('sound-btn').addEventListener('click', () => setSound(!soundOn));
+$('pause-btn').addEventListener('click', () => pauseGame());
+$('resume-btn').addEventListener('click', () => resumeGame());
+$('restart-btn').addEventListener('click', () => { closePause(); startDay(); });
+$('quit-btn').addEventListener('click', () => { closePause(); running = false; showTitle(); });
 $('start-btn').addEventListener('click', () => startDay());
 $('again-btn').addEventListener('click', () => startDay());
 $('help-btn').addEventListener('click', () => $('help').classList.remove('hidden'));
@@ -218,6 +222,7 @@ $('title').addEventListener('pointerdown', (e) => {
 
 // ───────────────────────── 게임 상태 ─────────────────────────
 let running = false;
+let paused = false;
 let elapsed = 0;
 let tool = 'batter';
 let bagCount = 0;
@@ -441,6 +446,27 @@ function endDay() {
   $('result').classList.remove('hidden');
 }
 
+// ───────────────────────── 일시정지 ─────────────────────────
+function pauseGame() {
+  if (!running || paused) return;
+  paused = true;
+  play('bag', 0.4);
+  for (const k in bgm) bgm[k].pause();
+  const left = Math.max(0, Math.ceil(DAY_LENGTH - elapsed));
+  $('pause-time').textContent = `남은 시간 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  $('pause').classList.remove('hidden');
+}
+function closePause() {
+  paused = false;
+  $('pause').classList.add('hidden');
+}
+function resumeGame() {
+  if (!paused) return;
+  closePause();
+  play('bag', 0.4);
+  playBgm(currentBgm);
+}
+
 function showTitle() {
   ['result', 'help', 'history'].forEach((id) => $(id).classList.add('hidden'));
   $('title').classList.remove('hidden');
@@ -565,49 +591,21 @@ function render() {
   tEl.style.opacity = tl > 0 ? Math.min(1, tl / 0.25) : 0;
   tEl.style.transform = `translate(-50%, ${tl > 0 ? -6 * (1 - Math.min(1, tl / 1.4)) : 0}px)`;
 
-  renderGuide();
-}
-
-// 첫 판매 전까지 다음에 누를 곳을 화살표로 알려 준다
-function guideTarget() {
-  if (!running || stats.sold > 0) return null;
-  if (customer && customer.phase === 'wait' && bagCount >= customer.need) return $('bag');
-  const order = ['done', 'flip', 'bean', 'batter'];
-  for (const st of order) {
-    const m = molds.find((x) => x.state === st);
-    if (!m) continue;
-    const need = st === 'batter' ? 'bean' : 'stick';
-    return tool === need ? m.el : tools.find((b) => b.dataset.tool === need);
-  }
-  if (molds.some((m) => m.state === 'side1' || m.state === 'side2')) return null;
-  const empty = molds.find((m) => m.state === 'empty');
-  if (!empty) return null;
-  return tool === 'batter' ? empty.el : tools.find((b) => b.dataset.tool === 'batter');
-}
-function renderGuide() {
-  const g = $('guide');
-  const target = guideTarget();
-  if (!target) { g.style.display = 'none'; return; }
-  const sr = stage.getBoundingClientRect(), tr = target.getBoundingClientRect();
-  const s = sr.width / 360;
-  const cx = (tr.left + tr.width / 2 - sr.left) / s;
-  const top = (tr.top - sr.top) / s;
-  g.style.display = 'block';
-  g.style.left = `${cx - 23}px`;
-  g.style.top = `${top - 40 + 5 * Math.sin(elapsed * 6)}px`;
-  g.style.transform = 'rotate(90deg)';
 }
 
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
-  if (running && !document.hidden) update(dt);
+  if (running && !paused && !document.hidden) update(dt);
   render();
   requestAnimationFrame(frame);
 }
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { for (const k in bgm) bgm[k].pause(); }
+  if (document.hidden) {
+    for (const k in bgm) bgm[k].pause();
+    pauseGame();   // 다른 앱으로 나갔다 오면 일시정지 화면에서 이어 하게 한다
+  }
   else {
     if (actx && actx.state !== 'running') actx.resume().catch(() => {});   // iOS는 돌아오면 멈춰 있다
     if (currentBgm) playBgm(currentBgm);

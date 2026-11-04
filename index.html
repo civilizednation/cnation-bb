@@ -28,6 +28,7 @@
       </div>
       <div class="pill money"><span id="money-text">0</span></div>
       <div class="pill sold"><span id="sold-text">0</span></div>
+      <button id="pause-btn" class="round-btn" aria-label="일시정지"><i></i><i></i></button>
       <button id="sound-btn" class="round-btn" aria-label="소리 켜기/끄기">🔊</button>
     </div>
 
@@ -65,7 +66,6 @@
       </button>
     </div>
 
-    <img id="guide" src="assets/sprites/arrow.webp" alt="">
     <div id="toast"></div>
 
     <!-- 시작 화면 -->
@@ -96,6 +96,17 @@
           <li><img src="assets/sprites/bag2.webp" alt=""><span>주문한 개수만큼 담기면 <b>봉투</b>를 눌러 건네요.</span></li>
         </ol>
         <button class="btn" id="help-close">알겠어요</button>
+      </div>
+    </div>
+
+    <!-- 일시정지 -->
+    <div id="pause" class="screen dim hidden">
+      <div class="panel pause-panel">
+        <h2>잠깐 쉬는 중</h2>
+        <p class="pause-time" id="pause-time"></p>
+        <button class="btn" id="resume-btn">계속하기</button>
+        <button class="btn ghost" id="restart-btn">처음부터 다시 하기</button>
+        <button class="btn ghost" id="quit-btn">처음 화면으로</button>
       </div>
     </div>
 
