@@ -177,7 +177,7 @@ from PIL import Image
 import os, re
 S = 'assets/sprites/'
 spec = {  # 파일: (가로, 세로, 투명 필요?)
-  'bread.png': (706, 544, True), 'icon.png': (512, 512, False),
+  'bread.png': (706, 544, True), 'icon.png': (512, 512, False)  # 검사 통과 뒤 180x180으로 줄임,
   'curtain.png': (1116, 192, True), 'start-scene.png': (1024, 2210, False),
   **{f'bag{i}.png': (520, 560, True) for i in range(4)},
 }
@@ -223,8 +223,8 @@ python3 -m http.server 8000   # 그다음 http://localhost:8000
 - [ ] 투명 배경 테두리에 흰 번짐이 없다 (어두운 밤 배경에서 특히 확인)
 - [ ] 아침 → 노을 → 밤 하늘 모두에서 새 그림이 어색하지 않다
 
-### 5-3. 게임에 넣는 형식: WebP 무손실
-게임은 그림을 **WebP(무손실)** 로 불러옵니다(`icon.png`만 PNG). 그림은 PNG로 만들어 검사(5-1)를 통과시킨 뒤, 아래 명령으로 같은 이름의 `.webp`를 만들고 PNG는 저장소에서 지우세요.
+### 5-3. 게임에 넣는 형식: WebP (품질 90)
+게임은 그림을 **WebP(손실 압축, 품질 90)** 로 불러옵니다. `icon.png`만 **180×180 PNG**입니다(iPhone 홈 화면 아이콘용). 아이콘은 512×512로 그린 뒤 180×180으로 줄이세요. 그림은 PNG로 만들어 검사(5-1)를 통과시킨 뒤, 아래 명령으로 같은 이름의 `.webp`를 만들고 PNG는 저장소에서 지우세요.
 
 ```bash
 cd assets/sprites && python3 - <<'EOF2'
@@ -234,7 +234,7 @@ for f in sorted(os.listdir('.')):
     if not f.endswith('.png') or f == 'icon.png': continue
     im = Image.open(f).convert('RGBA')
     if im.getchannel('A').getextrema()[0] == 255: im = im.convert('RGB')
-    im.save(f[:-4] + '.webp', 'WEBP', lossless=True, quality=100, method=6)
+    im.save(f[:-4] + '.webp', 'WEBP', quality=90, method=6, alpha_quality=100)
     os.remove(f); print('✅', f[:-4] + '.webp')
 EOF2
 ```
