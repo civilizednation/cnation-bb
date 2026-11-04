@@ -25,15 +25,16 @@ const BREAD_IMG = {
 };
 
 const CUSTOMERS = [
-  { id: 'bear', line: '붕어빵... {n} 주세요. 너무 맛있어 보여서요...' },
-  { id: 'elephant', line: '붕어빵 {n} 주게. 날씨가 참 춥구먼.' },
-  { id: 'eagle', line: '저기, 붕어빵 {n} 줘! 날개가 너무 시려워.' },
-  { id: 'fox', line: '붕어빵 맛있어 보이네요! {n} 주세요~' },
-  { id: 'lion', line: '따뜻한 붕어빵 {n} 부탁드려도 될까요?', noSad: true },
-  { id: 'gorilla', line: '하나론 부족해. {n} 포장해 줘!' },
-  { id: 'tiger', line: '붕어빵 {n} 주시게. 팥 듬뿍 넣은 걸로.' },
-  { id: 'cub', line: '엄마가 붕어빵 {n} 사 오래요!' },
-  { id: 'wolf', line: '저기요, 붕어빵 {n}만 포장해 주세요.' },
+  { id: 'alpaca', line: '붕어빵 {n} 주세요~ 오늘 너무 춥네요.' },
+  { id: 'auntie', line: '사장님, 붕어빵 {n} 줘요~ 애들 간식!' },
+  { id: 'deer', line: '붕어빵 {n} 바구니에 담아 주세요!' },
+  { id: 'hedgehog', line: '저기... 붕어빵 {n} 주실래요?' },
+  { id: 'otter', line: '따끈한 붕어빵 {n} 주세요!' },
+  { id: 'owl', line: '배달 가는 길이에요. 붕어빵 {n}!' },
+  { id: 'penguin', line: '붕어빵 {n} 포장해 주세요! 뒤뚱뒤뚱~' },
+  { id: 'rabbit', line: '와, 냄새 좋다! 붕어빵 {n} 주세요!' },
+  { id: 'seal', line: '팥 듬뿍 든 붕어빵 {n} 주세요!' },
+  { id: 'squirrel', line: '도토리 대신 붕어빵! {n} 주세요~' },
 ];
 const THANKS = ['와! 따끈따끈해서 최고예요!', '고마워요, 또 올게요!', '냄새부터 맛있네요~', '이 집 붕어빵이 최고야!'];
 
