@@ -81,6 +81,7 @@
         <p class="best" id="best-text"></p>
         <p class="tap-hint" id="tap-hint">🔊 화면을 터치하면 음악이 나와요</p>
       </div>
+      <p class="version-line">version <span id="version-text"></span> (<button type="button" class="link-btn" id="history-btn">revision history</button>)</p>
     </div>
 
     <!-- 굽는 법 -->
@@ -95,6 +96,15 @@
           <li><img src="assets/sprites/bag2.webp" alt=""><span>주문한 개수만큼 담기면 <b>봉투</b>를 눌러 건네요.</span></li>
         </ol>
         <button class="btn" id="help-close">알겠어요</button>
+      </div>
+    </div>
+
+    <!-- 업데이트 기록 -->
+    <div id="history" class="screen dim hidden">
+      <div class="panel">
+        <h2>업데이트 기록</h2>
+        <div class="history-list" id="history-list"></div>
+        <button class="btn" id="history-close">닫기</button>
       </div>
     </div>
 
@@ -116,6 +126,7 @@
     </div>
 
   </div>
+  <script src="version.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

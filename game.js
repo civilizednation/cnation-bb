@@ -200,6 +200,16 @@ $('start-btn').addEventListener('click', () => startDay());
 $('again-btn').addEventListener('click', () => startDay());
 $('help-btn').addEventListener('click', () => $('help').classList.remove('hidden'));
 $('help-close').addEventListener('click', () => $('help').classList.add('hidden'));
+$('history-btn').addEventListener('click', () => $('history').classList.remove('hidden'));
+$('history-close').addEventListener('click', () => $('history').classList.add('hidden'));
+
+// 버전 표시와 업데이트 기록 (내용은 version.js)
+$('version-text').textContent = VERSION;
+$('history-list').innerHTML = CHANGELOG.map((r) => `
+  <div class="history-item">
+    <h3>v${r.version}<small>${r.date}</small></h3>
+    <ul>${r.notes.map((n) => `<li>${n}</li>`).join('')}</ul>
+  </div>`).join('');
 $('home-btn').addEventListener('click', () => showTitle());
 // 시작 화면을 처음 누르면 시작 화면 음악을 튼다 (시작 버튼은 바로 장사 음악으로 넘어가니 건너뛴다)
 $('title').addEventListener('pointerdown', (e) => {
@@ -355,7 +365,7 @@ function onBag() {
 
 // ───────────────────────── 하루 흐름 ─────────────────────────
 function startDay() {
-  ['title', 'result', 'help'].forEach((id) => $(id).classList.add('hidden'));
+  ['title', 'result', 'help', 'history'].forEach((id) => $(id).classList.add('hidden'));
   running = true;
   elapsed = 0;
   bagCount = 0;
@@ -393,7 +403,7 @@ function endDay() {
 }
 
 function showTitle() {
-  ['result', 'help'].forEach((id) => $(id).classList.add('hidden'));
+  ['result', 'help', 'history'].forEach((id) => $(id).classList.add('hidden'));
   $('title').classList.remove('hidden');
   const best = Number(localStorage.getItem('bb-best') || 0);
   $('best-text').textContent = best > 0 ? `최고 기록 ${best.toLocaleString()}원` : '';
