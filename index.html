@@ -68,8 +68,16 @@
 
     <div id="toast"></div>
 
+    <!-- 처음 불러오기 -->
+    <div id="loading" class="screen">
+      <img class="loading-bread" src="assets/sprites/bread.webp" alt="">
+      <h1 class="loading-title">붕어빵 타이쿤</h1>
+      <div class="loading-bar"><i id="loading-fill"></i></div>
+      <p class="loading-text" id="loading-text">게임 데이터를 불러오는 중입니다... 0%</p>
+    </div>
+
     <!-- 시작 화면 -->
-    <div id="title" class="screen">
+    <div id="title" class="screen hidden">
       <div class="title-top">
         <img class="title-bread" src="assets/sprites/bread.webp" alt="">
         <h1>붕어빵 타이쿤</h1>
@@ -79,7 +87,6 @@
         <button class="btn" id="start-btn">장사 시작하기</button>
         <button class="btn ghost" id="help-btn">굽는 법</button>
         <p class="best" id="best-text"></p>
-        <p class="tap-hint" id="tap-hint">🔊 화면을 터치하면 음악이 나와요</p>
       </div>
       <p class="version-line">version <span id="version-text"></span> (<button type="button" class="link-btn" id="history-btn">revision history</button>)</p>
     </div>

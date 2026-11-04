@@ -57,17 +57,15 @@ const AudioCtx = window.AudioContext || window.webkitAudioContext;
 const actx = AudioCtx && location.protocol !== 'file:' ? new AudioCtx() : null;
 const sfxBuffers = {};
 const sfxEls = {};
-if (actx) {
-  SFX_NAMES.forEach((name) => {
-    fetch(SOUND + name + '.mp3')
-      .then((r) => r.arrayBuffer())
-      .then((data) => new Promise((ok, fail) => actx.decodeAudioData(data, ok, fail)))
-      .then((buf) => { sfxBuffers[name] = buf; })
-      .catch(() => {});
-  });
-} else {
-  SFX_NAMES.forEach((name) => sfxElement(name));
-}
+// 로딩 화면이 끝날 때까지 기다리는 효과음 목록
+const sfxReady = SFX_NAMES.map((name) => {
+  if (!actx) { sfxElement(name); return Promise.resolve(); }
+  return fetch(SOUND + name + '.mp3')
+    .then((r) => r.arrayBuffer())
+    .then((data) => new Promise((ok, fail) => actx.decodeAudioData(data, ok, fail)))
+    .then((buf) => { sfxBuffers[name] = buf; })
+    .catch(() => {});
+});
 function sfxElement(name) {
   if (!sfxEls[name]) {
     sfxEls[name] = new Audio(SOUND + name + '.mp3');
@@ -78,44 +76,54 @@ function sfxElement(name) {
 
 // 배경음악은 가벼운 webm(Opus)을 쓰고, 재생하지 못하는 브라우저(구형 iOS Safari 등)만 mp3를 받는다
 const BGM_EXT = new Audio().canPlayType('audio/webm; codecs="opus"') ? '.webm' : '.mp3';
-function makeBgm(name, volume, preload = 'auto') {
+function makeBgm(name, volume) {
   const el = new Audio();
   el.loop = true;
-  el.preload = preload;
-  el.src = SOUND + name + BGM_EXT;
+  el.preload = 'none';
+  el.bgmUrl = SOUND + name + BGM_EXT;
+  el.bgmVolume = volume;
   if (actx) {
     const src = actx.createMediaElementSource(el);
-    const gain = actx.createGain();
-    gain.gain.value = volume;
-    src.connect(gain);
-    gain.connect(actx.destination);
+    el.bgmGain = actx.createGain();
+    src.connect(el.bgmGain);
+    el.bgmGain.connect(actx.destination);
   } else {
     el.volume = volume;
   }
-  el.addEventListener('playing', () => { if (!actx || actx.state === 'running') markUnlocked(); });
   return el;
 }
-// 장사 음악은 3곡 중 하나를 날마다 무작위로 고른다 (전날과 같은 곡은 피한다).
-// 처음엔 그날 틀 곡만 받아 두고, 나머지는 정산 화면에서 다음 날 곡을 미리 받는다.
+// 장사 음악은 3곡 중 하나를 날마다 무작위로 고른다 (전날과 같은 곡은 피한다)
 const GAME_TRACKS = ['game1', 'game2', 'game3'];
 const bgm = { title: makeBgm('bgm-title', 0.4) };
-GAME_TRACKS.forEach((k) => { bgm[k] = makeBgm('bgm-' + k, 0.4, 'none'); });
+GAME_TRACKS.forEach((k) => { bgm[k] = makeBgm('bgm-' + k, 0.4); });
 let nextGameTrack = pickGameTrack(null);
-preloadBgm(nextGameTrack);
 
 function pickGameTrack(prev) {
   const pool = GAME_TRACKS.filter((k) => k !== prev);
   return pool[Math.floor(Math.random() * pool.length)];
 }
-function preloadBgm(k) {
+// 음악 파일을 통째로 받아 둔다. iPhone은 preload 설정을 무시해서, 재생할 때가 돼서야
+// 받기 시작하면 음악이 한참 늦게 나온다.
+function loadBgm(k) {
   const el = bgm[k];
-  if (el.preload === 'auto') return;
-  el.preload = 'auto';
-  el.load();
+  if (!el.bgmLoading) {
+    el.bgmLoading = fetch(el.bgmUrl)
+      .then((r) => { if (!r.ok) throw new Error(r.status); return r.blob(); })
+      .then((blob) => { if (!el.src) el.src = URL.createObjectURL(blob); })
+      .catch(() => { if (!el.src) el.src = el.bgmUrl; });
+  }
+  return el.bgmLoading;
+}
+// 음악이 갑자기 크게 시작하지 않도록 서서히 키운다
+function fadeIn(el, sec) {
+  if (!el.bgmGain) return;
+  const g = el.bgmGain.gain, t = actx.currentTime;
+  g.cancelScheduledValues(t);
+  g.setValueAtTime(0, t);
+  g.linearRampToValueAtTime(el.bgmVolume, t + sec);
 }
 let soundOn = localStorage.getItem('bb-sound') !== 'off';
 let currentBgm = null;
-let audioUnlocked = false;
 
 function play(name, volume = 0.8) {
   if (!soundOn) return;
@@ -139,32 +147,28 @@ function playBgm(which, restart = false) {
   currentBgm = which;
   for (const k in bgm) if (k !== which) bgm[k].pause();
   if (!which) return;
-  if (restart && changed) bgm[which].currentTime = 0;
-  if (soundOn && !paused) bgm[which].play().catch(() => {});   // 일시정지 중에는 틀지 않는다
+  const el = bgm[which];
+  if (!el.src) el.src = el.bgmUrl;   // 아직 다 못 받았으면 받으면서 바로 튼다
+  if (restart && changed) el.currentTime = 0;
+  if (!soundOn || paused) return;    // 일시정지 중에는 틀지 않는다
+  if (el.paused) {
+    fadeIn(el, which === 'title' ? 1.5 : 1.2);
+    el.play().catch(() => {});
+  }
 }
 function setSound(on) {
   soundOn = on;
   localStorage.setItem('bb-sound', on ? 'on' : 'off');
   document.getElementById('sound-btn').textContent = on ? '🔊' : '🔇';
   if (on) playBgm(currentBgm); else for (const k in bgm) bgm[k].pause();
-  updateTapHint();
 }
 
-// 모바일은 첫 터치 전에는 소리를 낼 수 없다: 어디든 처음 누르면 소리를 깨운다
+// 모바일은 터치 전에는 소리를 낼 수 없다. iPhone은 누르는 순간(pointerdown)이 아니라
+// 손을 뗄 때(touchend·click)만 소리를 켜도 되는 터치로 인정하므로 그때 소리를 깨운다.
 function unlockAudio() {
-  if (actx && actx.state !== 'running') actx.resume().then(markUnlocked).catch(() => {});
-  else markUnlocked();
+  if (actx && actx.state !== 'running') actx.resume().catch(() => {});
 }
-function markUnlocked() {
-  if (audioUnlocked) return;
-  audioUnlocked = true;
-  updateTapHint();
-}
-function updateTapHint() {
-  const el = document.getElementById('tap-hint');
-  if (el) el.classList.toggle('hidden', audioUnlocked || !soundOn);
-}
-document.addEventListener('pointerdown', unlockAudio, true);
+['touchend', 'pointerup', 'click'].forEach((type) => document.addEventListener(type, unlockAudio, true));
 
 // ───────────────────────── 화면 요소 ─────────────────────────
 const $ = (id) => document.getElementById(id);
@@ -215,10 +219,6 @@ $('history-list').innerHTML = CHANGELOG.map((r) => `
     <ul>${r.notes.map((n) => `<li>${n}</li>`).join('')}</ul>
   </div>`).join('');
 $('home-btn').addEventListener('click', () => showTitle());
-// 시작 화면을 처음 누르면 시작 화면 음악을 튼다 (시작 버튼은 바로 장사 음악으로 넘어가니 건너뛴다)
-$('title').addEventListener('pointerdown', (e) => {
-  if (!e.target.closest('#start-btn') && bgm.title.paused) playBgm('title');
-});
 
 // ───────────────────────── 게임 상태 ─────────────────────────
 let running = false;
@@ -430,8 +430,8 @@ function endDay() {
   playBgm(null);
   // 마감 소리가 끝나면 정산 화면에 시작 화면 음악을 처음부터 깔아 준다
   setTimeout(() => { if (!running && currentBgm === null) playBgm('title', true); }, 1200);
-  nextGameTrack = pickGameTrack(nextGameTrack);   // 다음 날 곡을 정산하는 동안 미리 받아 둔다
-  preloadBgm(nextGameTrack);
+  nextGameTrack = pickGameTrack(nextGameTrack);
+  loadBgm(nextGameTrack);   // 보통은 이미 받아 뒀다
   const net = money;
   const best = Math.max(net, Number(localStorage.getItem('bb-best') || 0));
   const isNew = net > 0 && net >= best && net > Number(localStorage.getItem('bb-best') || 0);
@@ -608,10 +608,61 @@ document.addEventListener('visibilitychange', () => {
   }
   else {
     if (actx && actx.state !== 'running') actx.resume().catch(() => {});   // iOS는 돌아오면 멈춰 있다
+    if (currentBgm && !$('loading').classList.contains('hidden')) return;
     if (currentBgm) playBgm(currentBgm);
   }
 });
 
+// ───────────────────────── 처음 불러오기 ─────────────────────────
+// 그림 전부, 효과음 전부, 타이틀 음악, 첫날 장사 음악을 받는 동안 로딩 화면을 보여 준다.
+// 다 받으면 "화면을 터치하면 시작해요": 이 터치가 iPhone에서 소리를 켜는 첫 터치가 된다.
+const PRELOAD_SPRITES = [
+  'start-scene', 'bg-morning', 'bg-sunset', 'bg-night', 'curtain', 'textbox', 'button',
+  'timer-pill', 'money-pill', 'bread-pill', 'clock',
+  'mold', 'batter', 'batter-bean', 'fresh', 'soso', 'good', 'burnt',
+  'bag0', 'bag1', 'bag2', 'bag3', 'kettle', 'kettle-on', 'bean', 'bean-on', 'stick', 'stick-on',
+];
+function loadImage(im) {
+  return new Promise((done) => {
+    if (im.complete) return done();
+    im.addEventListener('load', done, { once: true });
+    im.addEventListener('error', done, { once: true });
+  });
+}
+let loadingDone = false;
+function startLoading() {
+  const images = PRELOAD_SPRITES.map((name) => loadImage(Object.assign(new Image(), { src: SPRITE + name + '.webp' })));
+  const tasks = [
+    ...images,
+    ...Object.values(customerImgCache).map(loadImage),
+    ...sfxReady,
+    loadBgm('title'),
+    loadBgm(nextGameTrack),
+  ];
+  let done = 0;
+  const step = () => {
+    done++;
+    const pct = Math.round((done / tasks.length) * 100);
+    $('loading-fill').style.width = pct + '%';
+    $('loading-text').textContent = `게임 데이터를 불러오는 중입니다... ${pct}%`;
+  };
+  tasks.forEach((t) => t.then(step, step));
+  // 네트워크가 아주 느려도 15초가 지나면 그냥 시작할 수 있게 한다 (못 받은 건 쓸 때 받는다)
+  const timeout = new Promise((ok) => setTimeout(ok, 15000));
+  Promise.race([Promise.all(tasks.map((t) => t.catch(() => {}))), timeout]).then(() => {
+    loadingDone = true;
+    $('loading').classList.add('ready');
+    $('loading-text').textContent = '화면을 터치하면 시작해요';
+    GAME_TRACKS.forEach(loadBgm);   // 나머지 장사 음악은 뒤에서 받아 둔다
+  });
+}
+$('loading').addEventListener('click', () => {
+  if (!loadingDone) return;
+  unlockAudio();
+  $('loading').classList.add('hidden');
+  showTitle();   // 이 터치 안에서 타이틀 음악을 튼다
+});
+
 setSound(soundOn);
-showTitle();
+startLoading();
 requestAnimationFrame(frame);
