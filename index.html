@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#2a1b12">
+  <title>붕어빵 타이쿤</title>
+  <link rel="icon" href="assets/sprites/icon.png">
+  <link rel="apple-touch-icon" href="assets/sprites/icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="stage">
+
+    <!-- 하늘: 아침 → 노을 → 밤 -->
+    <div id="sky">
+      <div class="sky-layer" id="sky-morning"></div>
+      <div class="sky-layer" id="sky-sunset"></div>
+      <div class="sky-layer" id="sky-night"></div>
+    </div>
+    <img id="curtain" src="assets/sprites/curtain.png" alt="">
+
+    <!-- 상단 정보 -->
+    <div id="hud">
+      <div class="pill timer">
+        <div id="clock-icon"></div>
+        <span id="timer-text">3:00</span>
+      </div>
+      <div class="pill money"><span id="money-text">0</span></div>
+      <div class="pill sold"><span id="sold-text">0</span></div>
+      <button id="sound-btn" class="round-btn" aria-label="소리 켜기/끄기">🔊</button>
+    </div>
+
+    <!-- 손님 -->
+    <div id="customer">
+      <img id="customer-img" alt="손님">
+    </div>
+    <div id="bubble">
+      <div id="bubble-text"></div>
+      <div id="patience"><div id="patience-fill"></div></div>
+    </div>
+
+    <div id="counter"></div>
+
+    <!-- 3x3 철판 -->
+    <div id="grill"></div>
+
+    <!-- 봉투와 도구 -->
+    <div id="bench">
+      <button id="bag" aria-label="봉투를 손님에게 건네기">
+        <img id="bag-img" src="assets/sprites/bag0.png" alt="">
+        <span id="bag-count">0</span>
+      </button>
+      <button class="tool" data-tool="batter" aria-label="반죽">
+        <img src="assets/sprites/kettle.png" data-on="assets/sprites/kettle-on.png" data-off="assets/sprites/kettle.png" alt="">
+        <span>반죽</span>
+      </button>
+      <button class="tool" data-tool="bean" aria-label="팥">
+        <img src="assets/sprites/bean.png" data-on="assets/sprites/bean-on.png" data-off="assets/sprites/bean.png" alt="">
+        <span>팥</span>
+      </button>
+      <button class="tool" data-tool="stick" aria-label="꼬챙이">
+        <img src="assets/sprites/stick.png" data-on="assets/sprites/stick-on.png" data-off="assets/sprites/stick.png" alt="">
+        <span>꼬챙이</span>
+      </button>
+    </div>
+
+    <img id="guide" src="assets/sprites/arrow.png" alt="">
+    <div id="toast"></div>
+
+    <!-- 시작 화면 -->
+    <div id="title" class="screen">
+      <div class="title-top">
+        <img class="title-bread" src="assets/sprites/bread.png" alt="">
+        <h1>붕어빵 타이쿤</h1>
+        <p class="title-sub">cnation edition</p>
+      </div>
+      <div class="title-menu">
+        <button class="btn" id="start-btn">장사 시작하기</button>
+        <button class="btn ghost" id="help-btn">굽는 법</button>
+        <p class="best" id="best-text"></p>
+      </div>
+    </div>
+
+    <!-- 굽는 법 -->
+    <div id="help" class="screen dim hidden">
+      <div class="panel">
+        <h2>붕어빵 굽는 법</h2>
+        <ol class="steps">
+          <li><img src="assets/sprites/kettle.png" alt=""><span><b>반죽</b>을 들고 빈 틀을 눌러 반죽을 부어요.</span></li>
+          <li><img src="assets/sprites/bean.png" alt=""><span><b>팥</b>을 들고 반죽 위를 눌러 팥을 올려요.</span></li>
+          <li><img src="assets/sprites/stick.png" alt=""><span><b>꼬챙이</b>로 눌러 뒤집어요. 한쪽이 익으면 <b>한 번 더</b> 뒤집어요.</span></li>
+          <li><img src="assets/sprites/good.png" alt=""><span>노릇해지면 꼬챙이로 눌러 <b>봉투</b>에 담아요. 너무 오래 두면 타요!</span></li>
+          <li><img src="assets/sprites/bag2.png" alt=""><span>주문한 개수만큼 담기면 <b>봉투</b>를 눌러 건네요.</span></li>
+        </ol>
+        <button class="btn" id="help-close">알겠어요</button>
+      </div>
+    </div>
+
+    <!-- 정산 -->
+    <div id="result" class="screen dim hidden">
+      <div class="panel receipt">
+        <h2>오늘의 장사 정산</h2>
+        <div class="row"><span>판매한 붕어빵</span><b id="r-sold">0개</b></div>
+        <div class="row plus"><span>판매 매출</span><b id="r-sales">+0원</b></div>
+        <div class="row plus"><span>손님 팁</span><b id="r-tips">+0원</b></div>
+        <div class="row minus"><span>재료비 (반죽 1회 300원)</span><b id="r-cost">-0원</b></div>
+        <div class="row"><span>태운 붕어빵 · 놓친 손님</span><b id="r-miss">0개 · 0명</b></div>
+        <hr>
+        <div class="row total"><span>순이익</span><b id="r-total">0원</b></div>
+        <p class="best" id="r-best"></p>
+        <button class="btn" id="again-btn">내일 다시 장사하기</button>
+        <button class="btn ghost" id="home-btn">처음으로</button>
+      </div>
+    </div>
+
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
