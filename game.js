@@ -14,14 +14,14 @@ function burnTime(progress) { return 6 - 1.5 * progress; }   // 다 익은 뒤 �
 function patienceTime(progress) { return 32 - 10 * progress; }
 
 const BREAD_IMG = {
-  empty: 'mold.png',
-  batter: 'batter.png',
-  bean: 'batter-bean.png',
-  side1: 'fresh.png',
-  flip: 'soso.png',
-  side2: 'soso.png',
-  done: 'good.png',
-  burnt: 'burnt.png',
+  empty: 'mold.webp',
+  batter: 'batter.webp',
+  bean: 'batter-bean.webp',
+  side1: 'fresh.webp',
+  flip: 'soso.webp',
+  side2: 'soso.webp',
+  done: 'good.webp',
+  burnt: 'burnt.webp',
 };
 
 const CUSTOMERS = [
@@ -173,7 +173,7 @@ const molds = [];
 for (let i = 0; i < 9; i++) {
   const el = document.createElement('div');
   el.className = 'mold';
-  el.innerHTML = `<img src="${SPRITE}mold.png" alt=""><div class="bar"><i></i></div><span class="tag"></span>`;
+  el.innerHTML = `<img src="${SPRITE}mold.webp" alt=""><div class="bar"><i></i></div><span class="tag"></span>`;
   grillEl.appendChild(el);
   molds.push({
     el,
@@ -314,7 +314,7 @@ function spawnCustomer() {
   const need = 1 + Math.floor(Math.random() * maxNeed);
   const max = patienceTime(p);
   customer = { def, need, wait: max, max, phase: 'in', t: 0, mood: 'normal' };
-  $('customer-img').src = SPRITE + def.id + '.png';
+  $('customer-img').src = SPRITE + def.id + '.webp';
   $('bubble-text').innerHTML = def.line.replace('{n}', `<span class="n">${need}개</span>`);
   play('bell', 0.5);
 }
@@ -324,7 +324,7 @@ function customerLeaves(happy) {
   customer.t = 0;
   if (!happy) {
     customer.mood = 'sad';
-    if (!customer.def.noSad) $('customer-img').src = SPRITE + customer.def.id + '-sad.png';
+    if (!customer.def.noSad) $('customer-img').src = SPRITE + customer.def.id + '-sad.webp';
   }
   nextCustomerIn = 1.6 + Math.random() * 1.2;
 }
@@ -475,7 +475,7 @@ function render() {
   });
 
   // 봉투
-  const bagSrc = `${SPRITE}bag${Math.min(3, bagCount)}.png`;
+  const bagSrc = `${SPRITE}bag${Math.min(3, bagCount)}.webp`;
   const bagImg = $('bag-img');
   if (bagImg.getAttribute('src') !== bagSrc) bagImg.setAttribute('src', bagSrc);
   $('bag-count').textContent = bagCount;

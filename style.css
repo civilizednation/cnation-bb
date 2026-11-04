@@ -57,9 +57,9 @@ img { -webkit-user-drag: none; }
   background-position: center 70%;
   opacity: 0;
 }
-#sky-morning { background-image: url(assets/sprites/bg-morning.png); opacity: 1; }
-#sky-sunset  { background-image: url(assets/sprites/bg-sunset.png); }
-#sky-night   { background-image: url(assets/sprites/bg-night.png); }
+#sky-morning { background-image: url(assets/sprites/bg-morning.webp); opacity: 1; }
+#sky-sunset  { background-image: url(assets/sprites/bg-sunset.webp); }
+#sky-night   { background-image: url(assets/sprites/bg-night.webp); }
 
 #curtain {
   position: absolute;
@@ -93,12 +93,12 @@ img { -webkit-user-drag: none; }
   width: 88px;
   padding: 0 10px 0 9px;
   gap: 6px;
-  background-image: url(assets/sprites/timer-pill.png);
+  background-image: url(assets/sprites/timer-pill.webp);
   color: #fff;
 }
 #clock-icon {
   width: 18px; height: 18px;
-  background: url(assets/sprites/clock.png) 0 0 / 144px 18px no-repeat;
+  background: url(assets/sprites/clock.webp) 0 0 / 144px 18px no-repeat;
   image-rendering: pixelated;
   flex: none;
 }
@@ -106,13 +106,13 @@ img { -webkit-user-drag: none; }
   width: 110px;
   padding: 0 12px 0 40px;
   justify-content: flex-end;
-  background-image: url(assets/sprites/money-pill.png);
+  background-image: url(assets/sprites/money-pill.webp);
 }
 .pill.sold {
   width: 92px;
   padding: 0 12px 0 40px;
   justify-content: flex-end;
-  background-image: url(assets/sprites/bread-pill.png);
+  background-image: url(assets/sprites/bread-pill.webp);
 }
 .round-btn {
   margin-left: auto;
@@ -148,7 +148,7 @@ img { -webkit-user-drag: none; }
   left: 168px; top: 106px;
   width: 184px; height: 128px;
   padding: 16px 16px 34px 22px;
-  background: url(assets/sprites/textbox.png) 0 0 / 100% 100% no-repeat;
+  background: url(assets/sprites/textbox.webp) 0 0 / 100% 100% no-repeat;
   z-index: 4;
   display: flex;
   flex-direction: column;
@@ -334,7 +334,7 @@ img { -webkit-user-drag: none; }
 .screen.dim { background: rgba(28, 18, 10, .62); }
 
 #title {
-  background: url(assets/sprites/start-scene.png) center bottom / cover no-repeat;
+  background: url(assets/sprites/start-scene.webp) center bottom / cover no-repeat;
   justify-content: space-between;
   padding: 70px 0 64px;
 }
@@ -372,7 +372,7 @@ img { -webkit-user-drag: none; }
 .btn {
   height: 52px;
   border-radius: 26px;
-  background: url(assets/sprites/button.png) 0 0 / 100% 100% no-repeat;
+  background: url(assets/sprites/button.webp) 0 0 / 100% 100% no-repeat;
   color: #fff;
   font-size: 18px;
   font-weight: 900;
