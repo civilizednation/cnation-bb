@@ -75,10 +75,13 @@ function sfxElement(name) {
   return sfxEls[name];
 }
 
-function makeBgm(name, volume) {
-  const el = new Audio(SOUND + name + '.mp3');
+// 배경음악은 가벼운 webm(Opus)을 쓰고, 재생하지 못하는 브라우저(구형 iOS Safari 등)만 mp3를 받는다
+const BGM_EXT = new Audio().canPlayType('audio/webm; codecs="opus"') ? '.webm' : '.mp3';
+function makeBgm(name, volume, preload = 'auto') {
+  const el = new Audio();
   el.loop = true;
-  el.preload = 'auto';
+  el.preload = preload;
+  el.src = SOUND + name + BGM_EXT;
   if (actx) {
     const src = actx.createMediaElementSource(el);
     const gain = actx.createGain();
@@ -91,7 +94,24 @@ function makeBgm(name, volume) {
   el.addEventListener('playing', () => { if (!actx || actx.state === 'running') markUnlocked(); });
   return el;
 }
-const bgm = { title: makeBgm('bgm-title', 0.4), game: makeBgm('bgm-game', 0.35) };
+// 장사 음악은 3곡 중 하나를 날마다 무작위로 고른다 (전날과 같은 곡은 피한다).
+// 처음엔 그날 틀 곡만 받아 두고, 나머지는 정산 화면에서 다음 날 곡을 미리 받는다.
+const GAME_TRACKS = ['game1', 'game2', 'game3'];
+const bgm = { title: makeBgm('bgm-title', 0.4) };
+GAME_TRACKS.forEach((k) => { bgm[k] = makeBgm('bgm-' + k, 0.4, 'none'); });
+let nextGameTrack = pickGameTrack(null);
+preloadBgm(nextGameTrack);
+
+function pickGameTrack(prev) {
+  const pool = GAME_TRACKS.filter((k) => k !== prev);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+function preloadBgm(k) {
+  const el = bgm[k];
+  if (el.preload === 'auto') return;
+  el.preload = 'auto';
+  el.load();
+}
 let soundOn = localStorage.getItem('bb-sound') !== 'off';
 let currentBgm = null;
 let audioUnlocked = false;
@@ -334,7 +354,7 @@ function startDay() {
   toastUntil = 0;
   selectTool('batter');
   play('start');
-  playBgm('game', true);
+  playBgm(nextGameTrack, true);
 }
 
 function endDay() {
@@ -343,6 +363,8 @@ function endDay() {
   playBgm(null);
   // 마감 소리가 끝나면 정산 화면에 시작 화면 음악을 처음부터 깔아 준다
   setTimeout(() => { if (!running && currentBgm === null) playBgm('title', true); }, 1200);
+  nextGameTrack = pickGameTrack(nextGameTrack);   // 다음 날 곡을 정산하는 동안 미리 받아 둔다
+  preloadBgm(nextGameTrack);
   const net = money;
   const best = Math.max(net, Number(localStorage.getItem('bb-best') || 0));
   const isNew = net > 0 && net >= best && net > Number(localStorage.getItem('bb-best') || 0);
