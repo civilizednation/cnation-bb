@@ -317,15 +317,54 @@ function pickCustomer() {
   return def;
 }
 
+// 손님 그림은 처음에 모두 받아 둔다. 그림을 그때그때 받으면, 다 받기 전까지
+// 브라우저가 이전 손님 그림을 그대로 보여 줘서 이전 손님이 잠깐 비친다.
+const customerImgCache = {};
+CUSTOMERS.forEach((c) => [c.id, c.id + '-sad'].forEach((name) => {
+  if (name.endsWith('-sad') && c.noSad) return;
+  const im = new Image();
+  im.src = SPRITE + name + '.webp';
+  customerImgCache[name] = im;
+}));
+let customerImgToken = 0;
+// 그림을 완전히 그릴 수 있게 된 다음에 바꾼다 (늦게 끝난 이전 요청은 무시)
+function setCustomerImg(name, onReady) {
+  const token = ++customerImgToken;
+  const pre = customerImgCache[name] || Object.assign(new Image(), { src: SPRITE + name + '.webp' });
+  const apply = () => {
+    if (token !== customerImgToken) return;
+    $('customer-img').src = pre.src;
+    if (onReady) onReady();
+  };
+  if (pre.decode) pre.decode().then(apply, apply);
+  else if (pre.complete) apply();
+  else pre.onload = pre.onerror = apply;
+}
+
+// 말풍선 글자: 글꼴이 넓은 기기에서 넘치면 글자를 조금씩 줄여 풍선 안에 맞춘다
+function setBubble(html) {
+  const t = $('bubble-text'), b = $('bubble');
+  t.innerHTML = html;
+  t.style.fontSize = '';
+  const cs = getComputedStyle(b);
+  const avail = b.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - $('patience').offsetHeight - 8;
+  let size = parseFloat(getComputedStyle(t).fontSize);
+  while (size > 10.5 && (t.scrollWidth > t.clientWidth + 1 || t.offsetHeight > avail)) {
+    size -= 0.5;
+    t.style.fontSize = size + 'px';
+  }
+}
+
 function spawnCustomer() {
   const def = pickCustomer();
   const p = progress();
   const maxNeed = p < 0.3 ? 2 : 3;
   const need = 1 + Math.floor(Math.random() * maxNeed);
   const max = patienceTime(p);
-  customer = { def, need, wait: max, max, phase: 'in', t: 0, mood: 'normal' };
-  $('customer-img').src = SPRITE + def.id + '.webp';
-  $('bubble-text').innerHTML = def.line.replace('{n}', `<span class="n">${need}개</span>`);
+  const c = { def, need, wait: max, max, phase: 'in', t: 0, mood: 'normal', ready: false };
+  customer = c;
+  setCustomerImg(def.id, () => { c.ready = true; });   // 그림이 준비될 때까지는 숨겨 둔다
+  setBubble(def.line.replace('{n}', `<span class="n">${need}개</span>`));
   play('bell', 0.5);
 }
 
@@ -334,7 +373,7 @@ function customerLeaves(happy) {
   customer.t = 0;
   if (!happy) {
     customer.mood = 'sad';
-    if (!customer.def.noSad) $('customer-img').src = SPRITE + customer.def.id + '-sad.webp';
+    if (!customer.def.noSad) setCustomerImg(customer.def.id + '-sad');
   }
   nextCustomerIn = 1.6 + Math.random() * 1.2;
 }
@@ -347,7 +386,7 @@ function onBag() {
     play('sad', 0.7);
     shakeUntil = elapsed + 0.45;
     customer.wait = Math.max(0, customer.wait - 2);
-    $('bubble-text').innerHTML = `<span style="color:#c0392b">모자라요! <span class="n">${customer.need}개</span> 시켰어요!</span>`;
+    setBubble(`<span style="color:#c0392b">모자라요! <span class="n">${customer.need}개</span> 시켰어요!</span>`);
     return;
   }
   bagCount -= customer.need;
@@ -358,7 +397,7 @@ function onBag() {
   stats.sales += customer.need * PRICE;
   stats.tips += tip;
   play('happy');
-  $('bubble-text').innerHTML = `<b>${THANKS[Math.floor(Math.random() * THANKS.length)]}</b>`;
+  setBubble(`<b>${THANKS[Math.floor(Math.random() * THANKS.length)]}</b>`);
   toast(tip ? `+${earned.toLocaleString()}원 (팁 ${tip}원)` : `+${earned.toLocaleString()}원`);
   customerLeaves(true);
 }
@@ -427,7 +466,9 @@ function update(dt) {
     }
   });
 
-  if (customer) {
+  if (customer && !customer.ready) {
+    // 그림을 받는 중: 아직 등장하지 않았으니 기다리는 시간도 흐르지 않는다
+  } else if (customer) {
     customer.t += dt;
     if (customer.phase === 'in' && customer.t >= 0.45) { customer.phase = 'wait'; customer.t = 0; }
     else if (customer.phase === 'wait') {
@@ -435,7 +476,7 @@ function update(dt) {
       if (customer.wait <= 0) {
         stats.missed++;
         play('sad', 0.7);
-        $('bubble-text').innerHTML = '<span style="color:#7a6a5a">너무 오래 기다려서 그냥 갈게요...</span>';
+        setBubble('<span style="color:#7a6a5a">너무 오래 기다려서 그냥 갈게요...</span>');
         customerLeaves(false);
       }
     } else if (customer.phase === 'out' && customer.t >= 1.3) {
@@ -494,7 +535,7 @@ function render() {
 
   // 손님
   const cImg = $('customer-img'), bubble = $('bubble');
-  if (!customer) {
+  if (!customer || !customer.ready) {
     cImg.style.visibility = 'hidden';
     bubble.style.visibility = 'hidden';
   } else {

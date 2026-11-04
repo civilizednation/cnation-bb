@@ -145,9 +145,10 @@ img { -webkit-user-drag: none; }
 
 #bubble {
   position: absolute;
-  left: 168px; top: 106px;
-  width: 184px; height: 128px;
-  padding: 16px 16px 34px 22px;
+  left: 162px; top: 106px;
+  width: 192px; height: 128px;
+  /* 그림 속 흰 풍선은 가로 6~87%, 세로 5~65%뿐이다(아래는 꼬리). 글자와 바를 그 안쪽에 둔다 */
+  padding: 14px 34px 50px 24px;
   background: url(assets/sprites/textbox.webp) 0 0 / 100% 100% no-repeat;
   z-index: 4;
   display: flex;
@@ -160,8 +161,9 @@ img { -webkit-user-drag: none; }
   font-weight: 800;
   line-height: 1.4;
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
-#bubble-text .n { color: #e2541c; font-size: 17px; }
+#bubble-text .n { color: #e2541c; font-size: 1.2em; }
 #patience {
   margin-top: 8px;
   height: 7px;
