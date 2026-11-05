@@ -791,7 +791,7 @@ body.queue-mode #bubble { left: 190px; width: 186px; }
 #bubble-row { flex: none; display: flex; align-items: center; gap: 6px; margin-top: 8px; }
 #bubble-row #patience { flex: 1; margin-top: 0; }
 #order-chip { flex: none; padding: 0 7px 1px; border-radius: 8px; background: #f3e6d3; font-size: 13px; font-weight: 700; line-height: 18px; color: #5b2e10; }
-body:not(.queue-mode) #order-chip { display: none; }
+body:not(.queue-mode):not(.has-cream) #order-chip { display: none; }
 
 /* 슈크림: Day 4부터 슈크림 도구와 슈크림 봉투가 나온다 */
 body:not(.has-cream) #bag-cream, body:not(.has-cream) .tool-cream { display: none; }
@@ -818,3 +818,18 @@ body.has-cream #bag-count, body.has-cream #bag-cream-count { font-size: 12px; mi
 .mold .kind:empty { display: none; }
 .mold .kind.bean { background: #8a3b2b; }
 .mold .kind.cream { background: #d8a21d; }
+
+/* 타이틀: 게임 방법 · 랭킹 나란히 */
+.btn-row { display: flex; gap: 8px; }
+.btn-row .btn { flex: 1; }
+#ch-bean, #ch-mix { height: auto; min-height: 60px; padding: 8px 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; line-height: 1.25; }
+#ch-bean small, #ch-mix small { display: block; font-size: 14px; font-weight: 400; opacity: .9; }
+.rank-entry { display: flex; flex-direction: column; gap: 6px; }
+/* 랭킹 탭 */
+.rank-tabs { display: flex; gap: 4px; }
+.rank-tabs button { flex: 1; padding: 6px 0; border-radius: 10px; background: rgba(255, 250, 238, .6); font-size: 13px; font-weight: 700; color: #8a5a35; }
+.rank-tabs button.on { background: #e2541c; color: #fff; }
+
+/* 특별 손님 이름표: 말풍선 위에 붙는다 */
+#bubble-name { position: absolute; left: 18px; top: -6px; padding: 1px 8px; border-radius: 8px; background: #e2541c; color: #fff; font-size: 13px; font-weight: 700; line-height: 1.3; white-space: nowrap; }
+#bubble-name:empty { display: none; }

@@ -100,7 +100,6 @@ const Story = (() => {
 
   // ── 저장 (기획안 9장: 보내 주신 저장 코드를 이 게임에 맞게 고친 것) ──
   const SAVE_KEY = 'cnation-bb-story-v1', DB = 'cnation-bb-saves', STORE = 'slots', SAVE_VERSION = 1;
-  const RANK_KEY = 'cnation-bb-story-rank-v1';
   const fresh = () => ({
     version: SAVE_VERSION, day: 1, money: 0, satisfaction: SAT.start,
     upgrades: { fire: 0, plate: 0, bag: 0, sign: 0, price: 0 },
@@ -285,7 +284,8 @@ const Story = (() => {
     mode = 'story';
     cfg = buildCfg(day, save.upgrades);
     today = { day, startMoney: save.money, satStart: save.satisfaction, sat: save.satisfaction,
-      combo: 0, fast: 0, served: 0, left: 0, burnt: 0, perfect: 0, dum: 0, wrong: 0 };
+      combo: 0, fast: 0, served: 0, left: 0, burnt: 0, perfect: 0, dum: 0, wrong: 0, specials: [], arrivals: 0, auntieHappy: false };
+    buzzUntil = 0;
     const before = day > 1 ? moldsFor(day - 1) : [];
     startDay(save.money);
     clearQueue();
@@ -347,6 +347,7 @@ const Story = (() => {
       row('손님 만족도', `${Math.round(today.satStart)}% → ${Math.round(today.sat)}% (${satDiff >= 0 ? '+' : ''}${satDiff})`),
       row('빠른 제공 · 떠난 손님 · 탄 붕어빵', `${today.fast}번 · ${today.left}명 · ${today.burnt}개`),
       today.dum || today.wrong ? row('덤으로 준 붕어빵 · 잘못 건넨 횟수', `${today.dum}개 · ${today.wrong}번`) : '',
+      today.specials.length ? row('오늘의 특별 손님', today.specials.map((x) => `${x.name} ${x.ok ? '😊' : x.ok === false ? '😢' : '-'}`).join(' · ')) : '',
       `<p class="leftover">${leftoverText()}</p>`,
     ].join('');
     // 아침 상태를 다음 날 것으로 바꿔서 저장한다 (정산을 끝낸 뒤에 앱을 꺼도 그날 결과가 남게)
@@ -471,30 +472,31 @@ const Story = (() => {
     show('ending');
     playBgm('title');
   }
-  function readRanks() {
-    try { const r = JSON.parse(localStorage.getItem(RANK_KEY) || '[]'); return Array.isArray(r) ? r : []; } catch { return []; }
-  }
   function saveRank() {
     if (!ending) return;
     const name = ($s('end-name').value || '').trim().slice(0, 8) || '이름 없음';
-    const ranks = readRanks();
+    Ranks.rememberName(name);
     const entry = { name, money: ending.money, sat: ending.sat, ending: ending.title, retry: ending.retry, date: new Date().toISOString().slice(0, 10) };
-    ranks.push(entry);
-    ranks.sort((a, b) => b.money - a.money || b.sat - a.sat);
-    const top = ranks.slice(0, 10);
-    try { localStorage.setItem(RANK_KEY, JSON.stringify(top)); } catch { /* 무시 */ }
+    const at = Ranks.add('story', entry);
     ending = null;
-    showRanking(top.indexOf(entry));
+    showRanking('story', at);
   }
-  function showRanking(highlight = -1) {
-    const ranks = readRanks();
+  // 랭킹 3종: 스토리 모드 · 3분 챌린지 팥 · 3분 챌린지 팥 & 슈크림
+  let rankBoard = 'story';
+  function showRanking(board = rankBoard, highlight = -1) {
+    rankBoard = board;
+    document.querySelectorAll('#rank-tabs button').forEach((b) => b.classList.toggle('on', b.dataset.board === board));
+    const ranks = Ranks.read(board);
+    const sub = (r) => board === 'story'
+      ? `${r.ending} · 만족도 ${r.sat}% · ${r.date}`
+      : `${r.sold ? `판매 ${r.sold}개 · ` : ''}${r.date || ''}`;
     $s('rank-list').innerHTML = ranks.length
       ? ranks.map((r, i) => `<div class="rank-row ${i === highlight ? 'me' : ''}">
           <span class="rank-no">${i + 1}</span>
-          <span class="rank-name">${escapeHtml(r.name)}${r.retry ? ' <small>(다시 하기 사용)</small>' : ''}<small>${r.ending} · 만족도 ${r.sat}% · ${r.date}</small></span>
+          <span class="rank-name">${escapeHtml(r.name)}${r.retry ? ' <small>(다시 하기 사용)</small>' : ''}<small>${sub(r)}</small></span>
           <b>${won(r.money)}</b>
         </div>`).join('')
-      : '<p class="rank-empty">아직 기록이 없어요. 스토리 모드를 끝까지 해 보세요!</p>';
+      : `<p class="rank-empty">아직 기록이 없어요. ${board === 'story' ? '스토리 모드를 끝까지 해 보세요!' : '3분 챌린지에 도전해 보세요!'}</p>`;
     show('ranking');
   }
   function escapeHtml(t) { return t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
@@ -571,9 +573,69 @@ const Story = (() => {
     return parts.join(' · ');
   }
 
+  // ───────────────────────── 특별 손님 (3단계: 사람 손님 7명) ─────────────────────────
+  // 사람 손님은 저마다 규칙이 있다. 하루에 한 명(Day 9부터 두 명)까지, 같은 손님은 하루 한 번.
+  // 게임 속도를 위해 선택 버튼은 없다: "싸게 달라는" 손님(꼬마·윤이 엄마)은 그냥 싸게 판다.
+  const SPECIALS = {
+    courier: { name: '택배기사', from: 3, need: [1, 2], patience: 0.4, tipEach: 600,
+      lines: ['배송 세 건 남았어요! {n} 빨리요!', '{n} 주세요! 트럭 세워 두고 왔어요!', '엘리베이터 고장이라 계단 탔어요… {n}요, 빨리!', '오늘만 택배가 백 개예요! {n} 부탁해요!', '{n}요! 빨리 주시면 팁 드릴게요!'],
+      thanks: '덕분에 배송 늦지 않겠어요! 감사합니다!' },
+    principal: { name: '유치원 원장님', from: 7, need: [6, 9], patience: 2.5, bonus: 3000, satBonus: 5,
+      lines: ['아이들 간식으로 {n} 부탁드려요~', '오늘은 우리 반 아이들 모두 먹을 {n}요~', '선생님들 몫까지 {n} 넉넉히요~', '{n} 주세요~ 아이들이 손꼽아 기다려요!', '천천히 하셔도 돼요. {n} 부탁해요~'],
+      thanks: '아이들이 정말 좋아하겠어요! 단체 주문 감사 인사예요~' },
+    grandpa: { name: '동네 할아버지', from: 2, need: [2, 3], patience: 1.2,
+      lines: ['{n} 주게. 내일부터 자주 올게.'],
+      usual: ['늘 먹던 걸로 주게.', '허허, 늘 먹던 걸로.', '자네, 내가 늘 먹던 거 알지?'],
+      thanks: '허허, 역시 기억하는구먼!' },
+    girl: { name: '초등학생', from: 4, need: [1, 1], fixedPrice: 500, satBonus: 3,
+      lines: ['500원밖에 없는데… {n}만 주세요…', '용돈이 모자라요… {n}만 500원에 안 될까요?', '엄마 몰래 왔어요. 500원으로 {n}요!'],
+      thanks: '고맙습니다! 착한 가게라고 소문낼게요!' },
+    boy: { name: '초등학생', from: 6, need: [1, 3], change: true,
+      lines: ['{n} 주세요! 학원 가야 돼요!', '{n}요! 친구랑 나눠 먹을 거예요!', '축구하다 왔어요. {n} 주세요!'] },
+    auntie: { name: '윤이 엄마', from: 5, need: [3, 5], discount: 0.3,
+      lines: ['단골인데 {n} 좀 깎아 줘요~ 윤이가 엄청 좋아해요~', '사장님, {n} 싸게 줘요~ 윤이 간식이에요!', '윤이 학원 끝나고 먹을 거예요. {n} 좀 깎아 줘요~', '오늘은 윤이 친구들 것까지 {n}요~ 싸게요!', '윤이가 여기가 제일 맛있대요. {n} 깎아 줘요~'],
+      thanks: '역시 단골 대접! 동네에 소문낼게요~' },
+    yuni: { name: '윤이', from: 9, need: [4, 6], needs: 'auntie',
+      lines: ['배고파요… 급식 먹었는데 또 배고파요. {n}요.', '엄마가 여기 제일 맛있대요. {n} 주세요.', '학원 가기 전에 {n} 먹을게요.', '친구들 것까지 {n}요. 감사합니다!', '{n} 주세요. 엄마한테 자랑할 거예요.'],
+      thanks: '엄마가 사장님 칭찬 엄청 했어요!' },
+  };
+  let buzzUntil = 0;   // 윤이 엄마가 소문을 내면 잠깐 손님이 더 자주 온다
+  let forceSpecial = null;   // 시험용 (_debug.forceSpecial)
+  function specialFor(day) {
+    if (!today) return null;
+    if (forceSpecial) { const f = forceSpecial; forceSpecial = null; return f; }
+    const max = day >= 9 ? 2 : 1;
+    if (today.specials.length >= max) return null;
+    const seen = new Set(today.specials.map((x) => x.id).concat(Q.map((e) => e.sp).filter(Boolean)));
+    // 할아버지는 Day 2에 꼭 한 번 와서 단골 주문을 알려 준다
+    if (day === 2 && !save.grandpaOrder && !seen.has('grandpa') && today.arrivals >= 2) return 'grandpa';
+    const ok = Object.keys(SPECIALS).filter((id) => {
+      const sp = SPECIALS[id];
+      if (seen.has(id) || day < sp.from) return false;
+      if (id === 'grandpa' && day < 5) return false;
+      if (sp.needs === 'auntie' && !save.auntieMet) return false;
+      return true;
+    });
+    if (!ok.length || Math.random() > 1 / 6) return null;
+    return ok[Math.floor(Math.random() * ok.length)];
+  }
+  // 주문 n개를 종류로 나눈다 (슈크림 날만)
+  function splitOrder(n) {
+    if (!cfg.cream) return { bean: n, cream: 0 };
+    if (n >= 2 && Math.random() < Math.max(cfg.mixRatio, 0.3)) { const c = 1 + Math.floor(Math.random() * (n - 1)); return { bean: n - c, cream: c }; }
+    return Math.random() < cfg.creamRatio ? { bean: 0, cream: n } : { bean: n, cream: 0 };
+  }
+
   function spawnQueued() {
-    const def = pickQueued();
-    const order = makeOrder();
+    const spId = specialFor(today ? today.day : 1);
+    const sp = spId ? SPECIALS[spId] : null;
+    if (today) today.arrivals++;
+    const def = sp ? { id: spId, lines: sp.lines } : pickQueued();
+    let order;
+    if (spId === 'grandpa' && save.grandpaOrder) order = { ...save.grandpaOrder };
+    else if (sp) order = splitOrder(sp.need[0] + Math.floor(Math.random() * (sp.need[1] - sp.need[0] + 1)));
+    else order = makeOrder();
+    if (spId === 'girl') order = cfg.cream && Math.random() < 0.4 ? { bean: 0, cream: 1 } : { bean: 1, cream: 0 };
     const el = document.createElement('div');
     el.className = 'qc';
     const img = document.createElement('img');
@@ -585,12 +647,20 @@ const Story = (() => {
     tag.innerHTML = '<span></span><i><b></b></i>';
     queueEl.appendChild(el);
     queueEl.appendChild(tag);
-    const max = cfg.patience(progress());
+    const max = cfg.patience(progress()) * (sp && sp.patience ? sp.patience : 1);
     const i = Q.length, slot = SLOTS[Math.min(i, 2)];
-    const e = { def, order, line: pickLine(def), left: { ...order }, wait: max, max, state: 'in', t: 0, el, img, tag,
-      x: -170, up: slot.up, s: slot.s, dim: slot.dim, perfect: true, dum: { bean: 0, cream: 0 }, restoreAt: 0 };
+    let line = pickLine(def);
+    // 할아버지: 단골 주문이 있으면 "늘 먹던 걸로" (개수는 숨긴다: 기억해야 한다)
+    const usual = spId === 'grandpa' && !!save.grandpaOrder;
+    if (usual) line = sp.usual[Math.floor(Math.random() * sp.usual.length)];
+    const e = { def, sp: spId, order, line, left: { ...order }, wait: max, max, state: 'in', t: 0, el, img, tag,
+      x: -170, up: slot.up, s: slot.s, dim: slot.dim, perfect: true, dum: { bean: 0, cream: 0 }, restoreAt: 0,
+      hide: usual, wrongOnce: false };
+    if (spId === 'grandpa' && !save.grandpaOrder) save.grandpaOrder = { ...order };
+    if (sp) { e.el.classList.add('special'); today.specials.push({ id: spId, name: sp.name, ok: null }); }
     Q.push(e);
     play('bell', 0.5);
+    if (sp) setTimeout(() => play('bell', 0.5), 160);   // 특별 손님은 종이 두 번 울린다
   }
 
   function lineHtml(e) {
@@ -598,6 +668,8 @@ const Story = (() => {
   }
   function showFrontBubble(e) {
     bubbleOwner = e;
+    const nm = $s('bubble-name');
+    nm.textContent = e.sp ? SPECIALS[e.sp].name : '';
     setBubble(lineHtml(e));
     bubblePopAt = performance.now();
   }
@@ -634,22 +706,70 @@ const Story = (() => {
       if (!takeBread(kind)) e.perfect = false;
       e.left[kind]--;
       play('collect', 0.5);
+      if (e.sp === 'boy' && !e.changed && (e.left.bean || e.left.cream)) changeOrder(e);
+      else if (e.sp === 'boy' && !e.changed && !e.left.bean && !e.left.cream) { changeOrder(e, true); return; }
       if (!e.left.bean && !e.left.cream) complete(e);
     } else {
       // 안 시킨 종류 (또는 이미 다 받은 종류): 돌려주고 만족도 조금 감소
       today.wrong++;
       changeSat(SAT.wrong);
       play('sad', 0.6);
-      setBubble('<span style="color:#c0392b">그건 안 시켰어요!</span>');
-      e.restoreAt = elapsed + 1.1;
+      e.wrongOnce = true;
+      if (e.sp === 'grandpa') {
+        // 틀리면 단골 주문을 알려 준다
+        e.hide = false;
+        setBubble(`<span style="color:#c0392b">허허, 그게 아니지. <span class="n">${orderPhrase(e.order)}</span>일세.</span>`);
+        e.line = `늘 먹던 걸로… <span class="n">${orderPhrase(e.order)}</span>일세.`;
+        e.restoreAt = elapsed + 1.6;
+      } else {
+        setBubble('<span style="color:#c0392b">그건 안 시켰어요!</span>');
+        e.restoreAt = elapsed + 1.1;
+      }
     }
   }
 
+  // 남자 꼬마: 한 번 주문을 바꾼다 (하나 더 / 남은 것의 종류 바꾸기)
+  function changeOrder(e, addOnly) {
+    e.changed = true;
+    const left = e.left.bean ? 'bean' : 'cream';
+    const other = left === 'bean' ? 'cream' : 'bean';
+    let msg;
+    if (!addOnly && cfg.cream && (e.left[left] > 0) && Math.random() < 0.5) {
+      const n = e.left[left];
+      e.left[left] = 0; e.order[left] -= n;
+      e.left[other] += n; e.order[other] += n;
+      msg = `아니다! 남은 건 <span class="n">${other === 'cream' ? '슈크림' : '팥'}</span>으로 바꿀래요!`;
+    } else {
+      const k = addOnly ? (cfg.cream && Math.random() < 0.5 ? 'cream' : 'bean') : left;
+      e.left[k] += 1; e.order[k] += 1;
+      msg = `아 맞다! 친구 것까지 <span class="n">${k === 'cream' && cfg.cream ? '슈크림 ' : cfg.cream ? '팥 ' : ''}하나 더</span>요!`;
+    }
+    setBubble(msg);
+    e.line = msg;
+    play('bell', 0.4);
+  }
+
   function complete(e) {
+    const sp = e.sp ? SPECIALS[e.sp] : null;
     const ratio = e.wait / e.max;
     const cnt = e.order.bean + e.order.cream;
-    const tip = ratio > 0.6 ? 200 * cnt : 0;
-    const sales = e.order.bean * cfg.price + e.order.cream * (cfg.price + CREAM_BONUS);
+    let tip = ratio > 0.6 ? (sp && sp.tipEach ? sp.tipEach : 200) * cnt : 0;
+    let sales = e.order.bean * cfg.price + e.order.cream * (cfg.price + CREAM_BONUS);
+    let extra = 0, satBonus = 0, thanks = sp && sp.thanks;
+    if (sp && sp.discount) sales = Math.round(sales * (1 - sp.discount) / 10) * 10;      // 윤이 엄마: 30% 싸게
+    if (sp && sp.fixedPrice) { sales = sp.fixedPrice; tip = 0; }                          // 꼬마: 500원
+    if (sp && sp.bonus) extra = sp.bonus;                                                   // 원장님: 단체 보너스
+    if (sp && sp.satBonus) satBonus = sp.satBonus;
+    if (e.sp === 'grandpa') {
+      if (!e.hide) thanks = '고맙네. 이게 내 단골 주문일세, 기억해 두게!';                           // 처음 온 날
+      else if (!e.wrongOnce) { tip = Math.max(tip, 200 * cnt) * 2; satBonus = 3; }          // 기억했다!
+      else thanks = '허허, 다음엔 기억해 주게.';
+    }
+    if (e.sp === 'auntie') { save.auntieMet = true; today.auntieHappy = true; buzzUntil = elapsed + 30; }
+    if (e.sp === 'yuni') { if (today.auntieHappy || save.auntieHappy) tip = Math.round(Math.max(tip, 200 * cnt) * 1.5 / 10) * 10; else thanks = '감사합니다!'; }
+    if (today.auntieHappy) save.auntieHappy = true;
+    if (sp) { const rec = today.specials.find((x) => x.id === e.sp && x.ok === null); if (rec) rec.ok = true; }
+    sales += extra;
     money += sales + tip;
     stats.sold += cnt;
     stats.sales += sales;
@@ -659,8 +779,10 @@ const Story = (() => {
     e.state = 'thanks';
     e.t = 0;
     e.restoreAt = 0;
-    setBubble(`<b>${THANKS[Math.floor(Math.random() * THANKS.length)]}</b>`);
+    setBubble(`<b>${thanks || THANKS[Math.floor(Math.random() * THANKS.length)]}</b>`);
     onServed(ratio, e.perfect);
+    if (satBonus) changeSat(satBonus);
+    if (extra) setTimeout(() => toast(`단체 보너스 +${won(extra)}!`), 700);
   }
 
   function leave(e, happy) {
@@ -677,6 +799,7 @@ const Story = (() => {
     if (Q.length < cfg.capacity) arriveIn = Math.min(arriveIn, 1 + Math.random());
   }
   function leaveSad(e) {
+    if (e.sp) { const rec = today.specials.find((x) => x.id === e.sp && x.ok === null); if (rec) rec.ok = false; }
     stats.missed++;
     play('sad', 0.7);
     if (Q[0] === e) setBubble('<span style="color:#7a6a5a">너무 오래 기다려서 그냥 갈게요...</span>');
@@ -688,7 +811,7 @@ const Story = (() => {
     if (elapsed < cfg.dayLength - 2) {
       arriveIn -= dt;
       if (arriveIn <= 0) {
-        if (Q.length < cfg.capacity) { spawnQueued(); arriveIn = cfg.gap(); }
+        if (Q.length < cfg.capacity) { spawnQueued(); arriveIn = cfg.gap() * (elapsed < buzzUntil ? 0.6 : 1); }
         else arriveIn = 0.5;
       }
     }
@@ -777,7 +900,7 @@ const Story = (() => {
       if (i === 0 || i >= SLOTS.length || e.state === 'out') { setStyle(e.tag, 'display', 'none'); return; }
       setStyle(e.tag, 'display', '');
       const span = e.tag.firstChild, bar = e.tag.lastChild.firstChild;
-      const text = countText(e.order);
+      const text = e.hide ? '?' : countText(e.order);
       if (span.textContent !== text) span.textContent = text;
       const r = Math.max(0, e.wait / e.max);
       setStyle(bar, 'transform', `scaleX(${r.toFixed(3)})`);
@@ -812,7 +935,7 @@ const Story = (() => {
       setStyle(fill, 'width', `${(r * 100).toFixed(1)}%`);
       setStyle(fill, 'background', r > 0.6 ? '#5dbb63' : r > 0.3 ? '#f5a623' : '#e74c3c');
       const chip = $('order-chip');
-      const ct = countText(owner.order, owner.left);
+      const ct = owner.hide && owner.state === 'wait' ? countText(owner.order, owner.left).replace(/\d+/g, '?') : countText(owner.order, owner.left);
       if (chip.textContent !== ct) chip.textContent = ct;
     }
   }
@@ -822,7 +945,8 @@ const Story = (() => {
   on('story-btn', openMenu);
   on('story-continue', continueStory);
   on('story-new', newStory);
-  on('story-rank', () => showRanking());
+  on('story-rank', () => showRanking('story'));
+  document.querySelectorAll('#rank-tabs button').forEach((b) => b.addEventListener('click', () => showRanking(b.dataset.board)));
   on('story-menu-close', () => showTitle());
   on('confirm-yes', beginNew);
   on('confirm-no', openMenu);
@@ -847,9 +971,9 @@ const Story = (() => {
       const day = today ? today.day : 1;
       return day < 2 ? 'Day 2에 열리는 틀이에요' : 'Day 5에 열리는 틀이에요';
     },
-    onServed, onMissed, onBurnt, renderHud, endDay, refreshTitle,
+    onServed, onMissed, onBurnt, renderHud, endDay, refreshTitle, showRanking,
     serve, updateQueue, renderQueue, frontNeeds,
     // 테스트·밸런스 확인용
-    _debug: { DAYS, UPGRADES, get Q() { return Q; }, get save() { return save; }, set save(v) { save = v; }, get today() { return today; }, persist, buildCfg, beginNew, beginDay, buy, showIntro },
+    _debug: { set forceSpecial(v) { forceSpecial = v; }, spawnQueued: () => spawnQueued(), DAYS, UPGRADES, get Q() { return Q; }, get save() { return save; }, set save(v) { save = v; }, get today() { return today; }, persist, buildCfg, beginNew, beginDay, buy, showIntro },
   };
 })();
