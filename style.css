@@ -387,7 +387,7 @@ img { -webkit-user-drag: none; }
   animation: none;
 }
 #title h1 {
-  margin-top: 6px;
+  margin-top: 18px;   /* 두 줄이 되면서 로고와 붙어 보이지 않게 조금 내렸다 */
   font-size: 40px;
   font-weight: 700;
   letter-spacing: -1px;
@@ -396,12 +396,15 @@ img { -webkit-user-drag: none; }
   paint-order: stroke fill;
   text-shadow: 0 5px 0 #5b2e10;
 }
-.title-sub {
-  margin-top: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #8a4a1d;
-  letter-spacing: 1px;
+/* 게임 이름 "cnation 붕어빵 타이쿤": 두 줄, 위 줄 cnation은 같은 글자 꾸밈으로 작게 */
+.game-title { line-height: 1.05; }
+.game-title span { display: block; }
+.game-title .title-brand {
+  margin-bottom: 4px;
+  font-size: 0.62em;
+  letter-spacing: 0.5px;
+  -webkit-text-stroke-width: 5px;
+  text-shadow: 0 3px 0 #5b2e10;
 }
 .title-menu {
   width: 230px;
@@ -539,6 +542,7 @@ img { -webkit-user-drag: none; }
 #loading.ready .loading-bread { animation: bread-bob 1.4s ease-in-out infinite; }
 @keyframes bread-bob { 50% { transform: translateY(-6px) rotate(-3deg); } }
 .loading-title {
+  margin-top: 6px;
   font-size: 32px;
   font-weight: 700;
   color: #fff8ea;
