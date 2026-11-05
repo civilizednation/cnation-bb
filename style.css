@@ -502,8 +502,8 @@ img { -webkit-user-drag: none; }
   background: rgba(255, 250, 238, .85);
   color: #4a2a12;
 }
-.history-item h3 { font-size: 12.75px; font-weight: 700; color: #6b330c; }
-.history-item h3 small { margin-left: 6px; font-size: 9.5px; font-weight: 700; color: #a0703f; }
+.history-item h3 { font-size: 15px; font-weight: 700; color: #6b330c; }
+.history-item h3 small { margin-left: 6px; font-size: 11px; font-weight: 700; color: #a0703f; }
 .history-item ul { margin-top: 5px; padding-left: 16px; font-family: var(--font-text); font-size: 11.5px; font-weight: 400; line-height: 1.6; letter-spacing: -0.2px; word-break: keep-all; color: #4a2a12; }
 .history-item li + li { margin-top: 2px; }
 .receipt .row {
