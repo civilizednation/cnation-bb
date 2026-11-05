@@ -619,32 +619,33 @@ const Story = (() => {
   }
 
   // ───────────────────────── 특별 손님 (3단계: 사람 손님 7명) ─────────────────────────
-  // 사람 손님은 저마다 규칙이 있다. 하루에 한 명(Day 9부터 두 명)까지, 같은 손님은 하루 한 번.
+  // 사람 손님은 저마다 규칙이 있다. 동네 사람이라 Day 1부터 모두 온다(매일 첫 두 손님은 동물).
+  // 하루에 한 명(Day 9부터 두 명)까지, 같은 손님은 하루 한 번. 현이는 스토리마다 한 번.
   // 게임 속도를 위해 선택 버튼은 없다: "싸게 달라는" 손님(꼬마·윤이 엄마)은 그냥 싸게 판다.
   const SPECIALS = {
-    courier: { name: '택배기사', from: 3, need: [1, 2], patience: 0.4, tipEach: 600,
+    courier: { name: '택배기사', from: 1, need: [1, 2], patience: 0.4, tipEach: 600,
       lines: ['배송 세 건 남았어요! {n} 빨리요!', '{n} 주세요! 트럭 세워 두고 왔어요!', '엘리베이터 고장이라 계단 탔어요… {n}요, 빨리!', '오늘만 택배가 백 개예요! {n} 부탁해요!', '{n}요! 빨리 주시면 팁 드릴게요!'],
       thanks: '덕분에 배송 늦지 않겠어요! 감사합니다!' },
-    principal: { name: '유치원 원장님', from: 7, need: [6, 9], patience: 2.5, bonus: 3000, satBonus: 5,
+    principal: { name: '유치원 원장님', from: 1, need: [6, 9], patience: 2.5, bonus: 3000, satBonus: 5,
       lines: ['아이들 간식으로 {n} 부탁드려요~', '오늘은 우리 반 아이들 모두 먹을 {n}요~', '선생님들 몫까지 {n} 넉넉히요~', '{n} 주세요~ 아이들이 손꼽아 기다려요!', '천천히 하셔도 돼요. {n} 부탁해요~'],
       thanks: '아이들이 정말 좋아하겠어요! 단체 주문 감사 인사예요~' },
-    grandpa: { name: '동네 할아버지', from: 2, need: [2, 3], patience: 1.2,
+    grandpa: { name: '동네 할아버지', from: 1, need: [2, 3], patience: 1.2,
       lines: ['{n} 주게. 내일부터 자주 올게.'],
       usual: ['늘 먹던 걸로 주게.', '허허, 늘 먹던 걸로.', '자네, 내가 늘 먹던 거 알지?'],
       thanks: '허허, 역시 기억하는구먼!' },
-    girl: { name: '초등학생', from: 4, need: [1, 1], fixedPrice: 500, satBonus: 3,
+    girl: { name: '초등학생', from: 1, need: [1, 1], fixedPrice: 500, satBonus: 3,
       lines: ['500원밖에 없는데… {n}만 주세요…', '용돈이 모자라요… {n}만 500원에 안 될까요?', '엄마 몰래 왔어요. 500원으로 {n}요!'],
       thanks: '고맙습니다! 착한 가게라고 소문낼게요!' },
-    boy: { name: '초등학생', from: 6, need: [1, 3], change: true,
+    boy: { name: '초등학생', from: 1, need: [1, 3], change: true,
       lines: ['{n} 주세요! 학원 가야 돼요!', '{n}요! 친구랑 나눠 먹을 거예요!', '축구하다 왔어요. {n} 주세요!'] },
-    auntie: { name: '윤이 엄마', from: 5, need: [3, 5], discount: 0.3,
+    auntie: { name: '윤이 엄마', from: 1, need: [3, 5], discount: 0.3,
       lines: ['단골인데 {n} 좀 깎아 줘요~ 윤이가 엄청 좋아해요~', '사장님, {n} 싸게 줘요~ 윤이 간식이에요!', '윤이 학원 끝나고 먹을 거예요. {n} 좀 깎아 줘요~', '오늘은 윤이 친구들 것까지 {n}요~ 싸게요!', '윤이가 여기가 제일 맛있대요. {n} 깎아 줘요~'],
       thanks: '역시 단골 대접! 동네에 소문낼게요~' },
-    yuni: { name: '윤이', from: 9, need: [4, 6], needs: 'auntie',
+    yuni: { name: '윤이', from: 1, need: [4, 6], 
       lines: ['배고파요… 급식 먹었는데 또 배고파요. {n}요.', '엄마가 여기 제일 맛있대요. {n} 주세요.', '학원 가기 전에 {n} 먹을게요.', '친구들 것까지 {n}요. 감사합니다!', '{n} 주세요. 엄마한테 자랑할 거예요.'],
       thanks: '엄마가 사장님 칭찬 엄청 했어요!' },
     // 현이: 윤이 형, 윤이 엄마의 첫째 아들. 군 복무 중 휴가를 나와서 한 번만 온다
-    hyun: { name: '휴가 나온 현이', from: 10, need: [5, 8], needs: 'yuni', once: true, patience: 0.8, tipEach: 400, satBonus: 5,
+    hyun: { name: '휴가 나온 현이', from: 1, need: [5, 8], once: true, patience: 0.8, tipEach: 400, satBonus: 5,
       lines: ['휴가 나왔습니다! {n} 부탁드립니다!', '부대에서 제일 생각났던 게 이거예요. {n}요!', '윤이 형입니다. 엄마가 꼭 들르래요. {n}요!', '복귀 전에 동기들 줄 {n} 포장이요!', '휴가가 짧아서요… {n} 빨리 부탁드립니다!'],
       thanks: '충성! 복귀해서도 이 맛 생각날 거예요!' },
   };
@@ -658,14 +659,9 @@ const Story = (() => {
     const max = day >= 9 ? 2 : 1;
     if (today.specials.length >= max) return null;
     const seen = new Set(today.specials.map((x) => x.id).concat(Q.map((e) => e.sp).filter(Boolean)));
-    // 할아버지는 Day 2에 꼭 한 번 와서 단골 주문을 알려 준다
-    if (day === 2 && !save.grandpaOrder && !seen.has('grandpa') && today.arrivals >= 2) return 'grandpa';
     const ok = Object.keys(SPECIALS).filter((id) => {
       const sp = SPECIALS[id];
       if (seen.has(id) || day < sp.from) return false;
-      if (id === 'grandpa' && day < 5) return false;
-      if (sp.needs === 'auntie' && !save.auntieMet) return false;
-      if (sp.needs === 'yuni' && !save.yuniMet) return false;
       if (sp.once && save[id + 'Met']) return false;      // 현이는 휴가 때 한 번만
       return true;
     });
@@ -686,7 +682,12 @@ const Story = (() => {
     const def = sp ? { id: spId, lines: sp.lines } : pickQueued();
     let order;
     if (spId === 'grandpa' && save.grandpaOrder) order = { ...save.grandpaOrder };
-    else if (sp) order = splitOrder(sp.need[0] + Math.floor(Math.random() * (sp.need[1] - sp.need[0] + 1)));
+    else if (sp) {
+      // 동네 사람은 처음부터 모두 온다. 틀이 적은 초반(Day 1~2)에는 단체 주문을 조금 줄인다
+      const n = sp.need[0] + Math.floor(Math.random() * (sp.need[1] - sp.need[0] + 1));
+      const scale = Math.min(1, 0.55 + 0.15 * (today ? today.day : 3));
+      order = splitOrder(Math.max(1, Math.round(n * scale)));
+    }
     else order = makeOrder();
     if (spId === 'girl') order = cfg.cream && Math.random() < 0.4 ? { bean: 0, cream: 1 } : { bean: 1, cream: 0 };
     const el = document.createElement('div');
