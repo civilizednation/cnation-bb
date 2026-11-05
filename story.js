@@ -68,7 +68,7 @@ const Story = (() => {
   const UPGRADES = [
     { id: 'fire', icon: '🔥', name: '화력 강화', prices: [6000, 14000, 26000], day: 1 },
     { id: 'plate', icon: '🧯', name: '두꺼운 철판', prices: [5000, 12000], day: 1 },
-    { id: 'bag', icon: '🛍️', name: '큰 봉투', prices: [4000, 10000], day: 3 },
+    { id: 'bag', icon: '🛍️', name: '큰 봉투', prices: [4000, 22000], day: 3 },   // 12개는 비싸게: 초반에 바로 못 사게
     { id: 'sign', icon: '📯', name: '간판', prices: [8000, 20000], day: 8, hard: true },
     { id: 'price', icon: '💰', name: '가격 인상', prices: [10000, 24000], day: 8, hard: true },
   ];
