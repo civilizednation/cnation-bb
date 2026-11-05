@@ -479,25 +479,60 @@ const Story = (() => {
     const entry = { name, money: ending.money, sat: ending.sat, ending: ending.title, retry: ending.retry, date: new Date().toISOString().slice(0, 10) };
     const at = Ranks.add('story', entry);
     ending = null;
-    showRanking('story', at);
+    submitRank('story', entry, at);
   }
   // 랭킹 3종: 스토리 모드 · 3분 챌린지 팥 · 3분 챌린지 팥 & 슈크림
+  // 판마다 🌏 전체(온라인, online.js)와 📱 내 기기(이 기기 기록)를 볼 수 있다
   let rankBoard = 'story';
-  function showRanking(board = rankBoard, highlight = -1) {
+  let rankScope = 'online';
+  let rankToken = 0;
+  // hl: { local: 내 기기 목록에서 내 기록 순번, id: 온라인 기록 id }, note: 위에 띄울 안내
+  function showRanking(board = rankBoard, hl = {}, note = '') {
     rankBoard = board;
+    if (typeof hl === 'number') hl = { local: hl };
     document.querySelectorAll('#rank-tabs button').forEach((b) => b.classList.toggle('on', b.dataset.board === board));
-    const ranks = Ranks.read(board);
+    document.querySelectorAll('#rank-scope button').forEach((b) => b.classList.toggle('on', b.dataset.scope === rankScope));
+    $s('rank-note').textContent = note;
+    $s('rank-note').classList.toggle('hidden', !note);
+    show('ranking');
+    const token = ++rankToken;
+    if (rankScope === 'local') return renderRanks(board, Ranks.read(board), (r, i) => i === hl.local);
+    const cached = Online.cached(board);
+    if (cached) renderRanks(board, cached, (r) => r.id === hl.id);
+    else $s('rank-list').innerHTML = '<p class="rank-empty">전체 랭킹을 불러오는 중…</p>';
+    Online.top(board).then((list) => {
+      if (token === rankToken) renderRanks(board, list, (r) => r.id === hl.id);
+    }).catch(() => {
+      if (token !== rankToken || cached) return;
+      $s('rank-list').innerHTML = '<p class="rank-empty">전체 랭킹을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.<br>📱 내 기기 기록은 볼 수 있어요.</p>';
+    });
+  }
+  function renderRanks(board, ranks, isMe) {
     const sub = (r) => board === 'story'
-      ? `${r.ending} · 만족도 ${r.sat}% · ${r.date}`
+      ? `${escapeHtml(r.ending || '')} · 만족도 ${r.sat}% · ${r.date}`
       : `${r.sold ? `판매 ${r.sold}개 · ` : ''}${r.date || ''}`;
+    const empty = rankScope === 'online' ? '아직 전체 기록이 없어요. 첫 기록의 주인공이 되어 보세요!'
+      : `아직 기록이 없어요. ${board === 'story' ? '스토리 모드를 끝까지 해 보세요!' : '3분 챌린지에 도전해 보세요!'}`;
     $s('rank-list').innerHTML = ranks.length
-      ? ranks.map((r, i) => `<div class="rank-row ${i === highlight ? 'me' : ''}">
+      ? ranks.map((r, i) => `<div class="rank-row ${isMe(r, i) ? 'me' : ''}">
           <span class="rank-no">${i + 1}</span>
           <span class="rank-name">${escapeHtml(r.name)}${r.retry ? ' <small>(다시 하기 사용)</small>' : ''}<small>${sub(r)}</small></span>
           <b>${won(r.money)}</b>
         </div>`).join('')
-      : `<p class="rank-empty">아직 기록이 없어요. ${board === 'story' ? '스토리 모드를 끝까지 해 보세요!' : '3분 챌린지에 도전해 보세요!'}</p>`;
-    show('ranking');
+      : `<p class="rank-empty">${empty}</p>`;
+  }
+  // 내 기기에 저장한 기록을 전체 랭킹에도 올린다. 실패하면 내 기기 기록을 보여 준다
+  function submitRank(board, entry, localAt) {
+    rankScope = 'online';
+    rankBoard = board;
+    showRanking(board, {}, '전체 랭킹에 올리는 중…');
+    Online.add(board, entry)
+      .then((id) => { if (rankBoard === board) showRanking(board, { id }); })
+      .catch(() => {
+        if (rankBoard !== board) return;
+        rankScope = 'local';
+        showRanking(board, { local: localAt }, '전체 랭킹에 올리지 못했어요. 이 기기에는 저장했어요.');
+      });
   }
   function escapeHtml(t) { return t.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 
@@ -959,6 +994,7 @@ const Story = (() => {
   on('story-new', newStory);
   on('story-rank', () => showRanking('story'));
   document.querySelectorAll('#rank-tabs button').forEach((b) => b.addEventListener('click', () => showRanking(b.dataset.board)));
+  document.querySelectorAll('#rank-scope button').forEach((b) => b.addEventListener('click', () => { rankScope = b.dataset.scope; showRanking(); }));
   on('story-menu-close', () => showTitle());
   on('confirm-yes', beginNew);
   on('confirm-no', openMenu);
@@ -983,7 +1019,7 @@ const Story = (() => {
       const day = today ? today.day : 1;
       return day < 2 ? 'Day 2에 열리는 틀이에요' : 'Day 5에 열리는 틀이에요';
     },
-    onServed, onMissed, onBurnt, renderHud, endDay, refreshTitle, showRanking,
+    onServed, onMissed, onBurnt, renderHud, endDay, refreshTitle, showRanking, submitRank,
     serve, updateQueue, renderQueue, frontNeeds,
     // 테스트·밸런스 확인용
     _debug: { set forceSpecial(v) { forceSpecial = v; }, spawnQueued: () => spawnQueued(), DAYS, UPGRADES, get Q() { return Q; }, get save() { return save; }, set save(v) { save = v; }, get today() { return today; }, persist, buildCfg, beginNew, beginDay, buy, showIntro },

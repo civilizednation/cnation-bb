@@ -1,0 +1,50 @@
+// cnation 붕어빵 타이쿤 — 온라인 랭킹 Firestore 보안 규칙
+//
+// Firebase 콘솔 → cnation-project → Firestore Database → 규칙(Rules)에서
+// 기존 규칙의 `match /databases/{database}/documents { ... }` 안쪽에
+// 아래 "붕어빵" 블록을 그대로 붙여 넣고 [게시]를 누릅니다.
+// (cnation-jgame 등 다른 게임 규칙은 지우지 않습니다. 파일 전체를 바꾸지 마세요.)
+//
+// 규칙 요약
+//  - 누구나 읽기 가능 (랭킹 보기)
+//  - 새 기록 "추가"만 가능. 수정·삭제는 아무도 못 함 → 남의 기록을 지우거나 덮어쓸 수 없음
+//  - 이름 1~8자, 금액은 판마다 가능한 범위만, 정해진 칸만, 저장 시각은 서버 시각
+//  - 잘못 올라온 기록은 Firebase 콘솔에서 관리자가 직접 지웁니다
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ───────── 붕어빵 블록 시작 ─────────
+    function bbEntry(maxMoney) {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['name', 'money', 'sold', 'sat', 'ending', 'retry', 'date', 'createdAt'])
+        && d.keys().hasAll(['name', 'money', 'date', 'createdAt'])
+        && d.name is string && d.name.size() >= 1 && d.name.size() <= 8
+        && d.money is int && d.money > 0 && d.money <= maxMoney
+        && d.date is string && d.date.size() <= 10
+        && d.createdAt == request.time
+        && (!('sold' in d) || (d.sold is int && d.sold >= 0 && d.sold <= 2000))
+        && (!('sat' in d) || (d.sat is int && d.sat >= 0 && d.sat <= 100))
+        && (!('ending' in d) || (d.ending is string && d.ending.size() <= 20))
+        && (!('retry' in d) || d.retry is bool);
+    }
+    match /cnation-bb-rank-story/{id} {
+      allow read: if true;
+      allow create: if bbEntry(10000000);
+      allow update, delete: if false;
+    }
+    match /cnation-bb-rank-bean/{id} {
+      allow read: if true;
+      allow create: if bbEntry(1000000);
+      allow update, delete: if false;
+    }
+    match /cnation-bb-rank-mix/{id} {
+      allow read: if true;
+      allow create: if bbEntry(1000000);
+      allow update, delete: if false;
+    }
+    // ───────── 붕어빵 블록 끝 ─────────
+
+  }
+}
