@@ -258,6 +258,17 @@ img { -webkit-user-drag: none; }
   pointer-events: none;
   transform-origin: 50% 50%;
 }
+/* 다 익은 붕어빵 반짝임 (투명도만 바꿔서 그래픽 칩이 처리한다) */
+.mold::before {
+  content: '';
+  position: absolute; inset: 6px;
+  border-radius: 10px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(255, 230, 160, .55), rgba(255, 230, 160, 0) 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+.mold.ready::before { animation: bread-glow .8s ease-in-out infinite alternate; }
+@keyframes bread-glow { from { opacity: 0; } to { opacity: 1; } }
 .mold .bar {
   position: absolute;
   left: 14px; right: 14px; bottom: 4px;
@@ -269,7 +280,9 @@ img { -webkit-user-drag: none; }
 .mold .bar i {
   display: block;
   height: 100%;
-  width: 0;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
   background: #ffb347;
 }
 .mold .tag {

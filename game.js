@@ -274,6 +274,10 @@ function toast(text) {
   toastUntil = elapsed + 1.4;
 }
 
+function setStyle(el, prop, value) {
+  if (el.style[prop] !== value) el.style[prop] = value;
+}
+
 function setMold(m, state) {
   m.state = state;
   m.t = 0;
@@ -632,22 +636,27 @@ function render() {
       ? POUR_FRAMES[Math.min(POUR_FRAMES.length - 1, Math.floor(m.t / (POUR_TIME / POUR_FRAMES.length)))]
       : BREAD_IMG[m.locked ? 'empty' : m.state]);
     if (m.shown !== src) { m.img.src = src; m.shown = src; }
+    // 아래 스타일은 값이 바뀔 때만 넣는다 (같은 값을 매 프레임 다시 넣어도 iPhone은 다시 그리는 일이 생긴다)
     const f = (elapsed - m.flipAt) / 0.22;
-    m.img.style.transform = f >= 0 && f < 1 ? `scaleY(${Math.abs(Math.cos(f * Math.PI))})` : '';
+    setStyle(m.img, 'transform', f >= 0 && f < 1 ? `scaleY(${Math.abs(Math.cos(f * Math.PI)).toFixed(2)})` : '');
     let bar = -1, color = '#ffb347', tag = '';
     if (m.state === 'side1' || m.state === 'side2') bar = m.t / cook;
     if (m.state === 'flip') { bar = 1 - m.t / burn; color = '#ff7043'; tag = '뒤집어요!'; }
     if (m.state === 'done') { bar = 1 - m.t / burn; color = '#e53935'; tag = '다 익었어요!'; }
-    m.bar.style.display = bar < 0 ? 'none' : '';
-    if (bar >= 0) { m.fill.style.width = `${Math.max(0, Math.min(1, bar)) * 100}%`; m.fill.style.background = color; }
-    m.tag.style.display = tag ? '' : 'none';
+    setStyle(m.bar, 'display', bar < 0 ? 'none' : '');
+    if (bar >= 0) {
+      // 너비 대신 scaleX로 줄인다 (레이아웃을 다시 계산하지 않아 가볍다)
+      setStyle(m.fill, 'transform', `scaleX(${Math.max(0, Math.min(1, bar)).toFixed(3)})`);
+      setStyle(m.fill, 'background', color);
+    }
+    setStyle(m.tag, 'display', tag ? '' : 'none');
     if (tag && m.tag.textContent !== tag) m.tag.textContent = tag;
     // 뒤집으면 겉모습이 같으니 틀 위에 무엇이 들었는지 표시한다 (슈크림이 있는 날만)
     const flipped = ['side1', 'flip', 'side2', 'done', 'burnt'].includes(m.state);
     const kindText = cfg.cream && flipped ? (m.kind === 'cream' ? '슈' : '팥') : '';
     if (m.kindEl.textContent !== kindText) { m.kindEl.textContent = kindText; m.kindEl.className = 'kind ' + (m.kind || ''); }
-    if (m.state === 'done') m.img.style.filter = `brightness(${1 + 0.08 * Math.sin(elapsed * 8)})`;
-    else if (m.img.style.filter) m.img.style.filter = '';
+    // 다 익은 붕어빵 반짝임: 매 프레임 밝기 필터를 바꾸던 것을 CSS 애니메이션(.ready)으로 (그래픽 칩이 처리)
+    if (m.el.classList.contains('ready') !== (m.state === 'done')) m.el.classList.toggle('ready', m.state === 'done');
   });
 
   // 봉투
