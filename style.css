@@ -831,5 +831,5 @@ body.has-cream #bag-count, body.has-cream #bag-cream-count { font-size: 12px; mi
 .rank-tabs button.on { background: #e2541c; color: #fff; }
 
 /* 특별 손님 이름표: 말풍선 위에 붙는다 */
-#bubble-name { position: absolute; left: 18px; top: -6px; padding: 1px 8px; border-radius: 8px; background: #e2541c; color: #fff; font-size: 13px; font-weight: 700; line-height: 1.3; white-space: nowrap; }
+#bubble-name { position: absolute; left: 16px; top: -17px; padding: 1px 8px; border-radius: 8px; background: #e2541c; color: #fff; font-size: 13px; font-weight: 700; line-height: 1.3; white-space: nowrap; }
 #bubble-name:empty { display: none; }
