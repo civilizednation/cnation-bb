@@ -1,5 +1,7 @@
 # cnation 붕어빵 타이쿤
 
+**사용자에게 하는 모든 설명·답변·보고는 반드시 한국어로 씁니다.** (코드 주석과 커밋 메시지는 지금처럼 써도 되지만, 사용자에게 보여 주는 글은 영어로 쓰지 않습니다.)
+
 게임 이름은 어디서나 **"cnation 붕어빵 타이쿤"**으로 씁니다. 홈 화면 아이콘 이름만 **"cnation 붕어빵"**입니다(`index.html`의 `apple-mobile-web-app-title`, `manifest.webmanifest`의 `short_name`).
 
 빌드 없는 정적 웹 게임입니다(`index.html` · `style.css` · `game.js` · `version.js`). 로컬 확인은 `python3 -m http.server`로 합니다.
