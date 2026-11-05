@@ -456,6 +456,27 @@ const Story = (() => {
     clearSave();   // 엔딩을 보면 스토리 저장은 끝난다
     show('ending');
     playBgm('title');
+    autoScrollEnding();
+  }
+  // 엔딩 창이 화면보다 길면, 기록이 나타나는 속도에 맞춰 천천히 아래로 내려간다 (손으로 만지면 멈춤)
+  let endScrollRaf = 0;
+  function autoScrollEnding() {
+    const panel = document.querySelector('#ending .panel');
+    cancelAnimationFrame(endScrollRaf);
+    panel.scrollTop = 0;
+    const DELAY = 1200, SPEED = 28;   // 1.2초 뒤부터 초당 28px
+    let start = 0, stopped = false;
+    const stop = () => { stopped = true; cancelAnimationFrame(endScrollRaf); };
+    ['pointerdown', 'wheel', 'touchstart'].forEach((ev) => panel.addEventListener(ev, stop, { once: true, passive: true }));
+    const step = (t) => {
+      if (stopped || $s('ending').classList.contains('hidden')) return;
+      if (!start) start = t;
+      const max = panel.scrollHeight - panel.clientHeight;
+      const target = Math.min(max, Math.max(0, (t - start - DELAY) / 1000 * SPEED));
+      panel.scrollTop = target;
+      if (target < max || t - start < DELAY + 6000) endScrollRaf = requestAnimationFrame(step);   // 기록이 다 나올 때까지는 계속 확인
+    };
+    endScrollRaf = requestAnimationFrame(step);
   }
   // 보름 장사 기록: 한 줄씩 차례로 나타난다 (CSS .end-rec 애니메이션)
   function endingRecords(s) {
