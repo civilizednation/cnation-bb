@@ -26,7 +26,7 @@ const BREAD_IMG = {
 
 const CUSTOMERS = [
   { id: 'alpaca', line: '붕어빵 {n} 주세요~ 오늘 너무 춥네요.' },
-  { id: 'auntie', line: '사장님, 붕어빵 {n} 줘요~ 애들 간식!' },
+  { id: 'auntie', line: '붕어빵 {n} 빨리 주세요~ 우리 윤이가 엄청 좋아한단 말이에요~' },
   { id: 'deer', line: '붕어빵 {n} 바구니에 담아 주세요!' },
   { id: 'hedgehog', line: '저기... 붕어빵 {n} 주실래요?' },
   { id: 'otter', line: '따끈한 붕어빵 {n} 주세요!' },
@@ -346,18 +346,31 @@ function setCustomerImg(name, onReady) {
   else pre.onload = pre.onerror = apply;
 }
 
-// 말풍선 글자: 글꼴이 넓은 기기에서 넘치면 글자를 조금씩 줄여 풍선 안에 맞춘다
+// 말풍선 글자를 풍선 안에 맞춘다. 넘치면 글자를 13px까지 줄여 보고, 그래도 넘치면
+// 말풍선을 세로로 키운다(긴 대사용). 그래도 넘칠 때만 글자를 더 줄인다.
+// 그림 속 흰 풍선은 세로 5~65%뿐이라(아래는 꼬리) 위아래 여백도 높이에 맞춰 바꾼다.
+const BUBBLE_HEIGHTS = [128, 150, 172];
 function setBubble(html) {
   const t = $('bubble-text'), b = $('bubble');
   t.innerHTML = html;
   t.style.fontSize = '';
-  const cs = getComputedStyle(b);
-  const avail = b.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - $('patience').offsetHeight - 8;
-  let size = parseFloat(getComputedStyle(t).fontSize);
-  while (size > 10.5 && (t.scrollWidth > t.clientWidth + 1 || t.offsetHeight > avail)) {
-    size -= 0.5;
-    t.style.fontSize = size + 'px';
+  const base = parseFloat(getComputedStyle(t).fontSize);
+  const fits = () => {
+    const cs = getComputedStyle(b);
+    const avail = b.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - $('patience').offsetHeight - 8;
+    return t.scrollWidth <= t.clientWidth + 1 && t.offsetHeight <= avail;
+  };
+  for (const h of BUBBLE_HEIGHTS) {
+    b.style.height = h + 'px';
+    b.style.paddingTop = Math.round(h * 0.046 + 8) + 'px';
+    b.style.paddingBottom = Math.round(h * 0.35 + 5) + 'px';
+    let size = base;
+    t.style.fontSize = '';
+    while (size > 13 && !fits()) t.style.fontSize = (size -= 0.5) + 'px';
+    if (fits()) return;
   }
+  let size = parseFloat(t.style.fontSize || base);
+  while (size > 10.5 && !fits()) t.style.fontSize = (size -= 0.5) + 'px';
 }
 
 function spawnCustomer() {

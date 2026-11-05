@@ -24,4 +24,4 @@
 
 - 그림은 `assets/sprites/`에 WebP(품질 90)로 둡니다. `icon.png`만 180×180 PNG입니다. 그림 작업 규격은 `docs/codex-asset-brief.md`를 따릅니다.
 - 배경음악은 `assets/sounds/`에 webm(Opus)과 대체용 mp3를 같은 이름으로 함께 둡니다.
-- 손님 목록은 `game.js`의 `CUSTOMERS` 배열입니다. 대사는 말풍선에 2줄 안에 들어가게 씁니다.
+- 손님 목록은 `game.js`의 `CUSTOMERS` 배열입니다. 대사는 말풍선에 2줄 안에 들어가게 쓰는 게 기본입니다. 더 긴 대사는 말풍선이 세로로 커져서 4줄까지 들어갑니다(`setBubble`). 말풍선이 커지면 손님 얼굴과 가게 화면을 더 가리니, 꼭 필요한 대사만 길게 씁니다.
