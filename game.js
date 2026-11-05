@@ -26,7 +26,7 @@ const BREAD_IMG = {
 
 const CUSTOMERS = [
   { id: 'alpaca', line: '붕어빵 {n} 주세요~ 오늘 너무 춥네요.' },
-  { id: 'auntie', line: '붕어빵 {n} 빨리 주세요~ 우리 윤이가 엄청 좋아한단 말이에요~' },
+  { id: 'auntie', line: '붕어빵 {n} 빨리요~ 우리 윤이가 엄청 좋아한단 말이에요~' },
   { id: 'deer', line: '붕어빵 {n} 바구니에 담아 주세요!' },
   { id: 'hedgehog', line: '저기... 붕어빵 {n} 주실래요?' },
   { id: 'otter', line: '따끈한 붕어빵 {n} 주세요!' },
