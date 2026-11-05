@@ -791,7 +791,6 @@ body.queue-mode #bubble { left: 190px; width: 186px; }
 #bubble-row { flex: none; display: flex; align-items: center; gap: 6px; margin-top: 8px; }
 #bubble-row #patience { flex: 1; margin-top: 0; }
 #order-chip { flex: none; padding: 0 7px 1px; border-radius: 8px; background: #f3e6d3; font-size: 13px; font-weight: 700; line-height: 18px; color: #5b2e10; }
-body:not(.queue-mode):not(.has-cream) #order-chip { display: none; }
 
 /* 슈크림: Day 4부터 슈크림 도구와 슈크림 봉투가 나온다 */
 body:not(.has-cream) #bag-cream, body:not(.has-cream) .tool-cream { display: none; }

@@ -23,7 +23,7 @@ const CHALLENGE = {
   variant: 'bean',                                  // 랭킹 이름: 3분 챌린지 팥
 };
 // 3분 챌린지 팥 & 슈크림: 같은 규칙에 슈크림 도구·봉투가 더해진다. 손님은 섞어서 주문하기도 한다.
-// 속도전이라 종류별로 봉투를 한 번씩 누르면 그 종류를 한꺼번에 건넨다.
+// 스토리 모드와 같이 봉투를 한 번 누를 때마다 한 개씩 건넨다.
 const CHALLENGE_MIX = Object.assign({}, CHALLENGE, { variant: 'mix', cream: true, creamRatio: 0.45, mixRatio: 0.35 });
 
 // 주문 {bean, cream}을 말로: "2개" / "팥 2개" / "슈크림 1개" / "팥 2개랑 슈크림 1개"
@@ -637,19 +637,13 @@ function onBag(kind = 'bean') {
     c.restoreAt = elapsed + 1.1;
     return;
   }
+  // 스토리 모드와 같이 봉투를 한 번 누를 때마다 한 개씩 건넨다
   const bag = kind === 'cream' ? creamPerfect : bagPerfect;
-  if (bag.length < want) {
-    play('sad', 0.7);
-    c.wait = Math.max(0, c.wait - 2);
-    const what = cfg.cream ? `${kind === 'cream' ? '슈크림' : '팥'} ${want}개` : `${want}개`;
-    setBubble(`<span style="color:#c0392b">모자라요! <span class="n">${what}</span> 시켰어요!</span>`);
-    c.restoreAt = elapsed + 1.1;
-    return;
-  }
-  bag.splice(0, want);
+  if (!bag.length) return hint(`${cfg.cream ? (kind === 'cream' ? '슈크림 ' : '팥 ') : ''}봉투가 비었어요`);
+  bag.shift();
   if (kind === 'bean') bagCount = bagPerfect.length;
-  c.left[kind] = 0;
-  if (c.left.bean || c.left.cream) { play('collect', 0.5); return; }   // 다른 종류가 남았다
+  c.left[kind]--;
+  if (c.left.bean || c.left.cream) { play('collect', 0.5); return; }   // 아직 남았다
   const ratio = c.wait / c.max;
   const tip = ratio > 0.6 ? 200 * c.need : 0;
   const sales = c.order.bean * cfg.price + c.order.cream * (cfg.price + 200);
@@ -913,8 +907,8 @@ function render() {
     drawBag('bag-cream-img', 'bag-cream-count', 'bag-cream', creamPerfect.length, need.cream > 0 && creamPerfect.length > 0);
   } else {
     const w = customer && customer.phase === 'wait' ? customer.left : { bean: 0, cream: 0 };
-    drawBag('bag-img', 'bag-count', 'bag', bagCount, w.bean > 0 && bagCount >= w.bean);
-    if (cfg.cream) drawBag('bag-cream-img', 'bag-cream-count', 'bag-cream', creamPerfect.length, w.cream > 0 && creamPerfect.length >= w.cream);
+    drawBag('bag-img', 'bag-count', 'bag', bagCount, w.bean > 0 && bagCount > 0);
+    if (cfg.cream) drawBag('bag-cream-img', 'bag-cream-count', 'bag-cream', creamPerfect.length, w.cream > 0 && creamPerfect.length > 0);
   }
 
   // 손님
@@ -940,7 +934,7 @@ function render() {
     cImg.style.transform = `translateX(${x}px) scale(${s})`;
     bubble.style.transform = `scale(${bs})`;
     const r = customer.phase === 'wait' ? customer.wait / customer.max : customer.phase === 'in' ? 1 : 0;
-    if (cfg.cream && customer.order) { const ct = countText(customer.order, customer.left); if ($('order-chip').textContent !== ct) $('order-chip').textContent = ct; }
+    if (customer.order) { const ct = countText(customer.order, customer.left); if ($('order-chip').textContent !== ct) $('order-chip').textContent = ct; }
     const fill = $('patience-fill');
     fill.style.width = `${Math.max(0, r) * 100}%`;
     fill.style.background = r > 0.6 ? '#5dbb63' : r > 0.3 ? '#f5a623' : '#e74c3c';
