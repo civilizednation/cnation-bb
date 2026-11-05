@@ -336,6 +336,7 @@ const Story = (() => {
       row('가진 돈', won(money)),
       row('손님 만족도', `${Math.round(today.satStart)}% → ${Math.round(today.sat)}% (${satDiff >= 0 ? '+' : ''}${satDiff})`),
       row('빠른 제공 · 떠난 손님 · 탄 붕어빵', `${today.fast}번 · ${today.left}명 · ${today.burnt}개`),
+      `<p class="leftover">${leftoverText()}</p>`,
     ].join('');
     // 아침 상태를 다음 날 것으로 바꿔서 저장한다 (정산을 끝낸 뒤에 앱을 꺼도 그날 결과가 남게)
     save.money = money;
