@@ -1,17 +1,25 @@
 'use strict';
 
 // ───────────────────────── 설정 ─────────────────────────
-const DAY_LENGTH = 180;        // 하루 장사 시간(초)
-const PRICE = 1000;            // 붕어빵 한 개 값
 const BATTER_COST = 300;       // 반죽 한 번 붓는 재료비
-const BAG_MAX = 9;
 const SPRITE = 'assets/sprites/';
 const SOUND = 'assets/sounds/';
+const ALL_MOLDS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
-// 시간이 갈수록 빨리 익고(바빠지고) 손님은 덜 기다린다
-function cookTime(progress) { return 5 - 1.6 * progress; }   // 한 면 익는 시간
-function burnTime(progress) { return 6 - 1.5 * progress; }   // 다 익은 뒤 타기까지
-function patienceTime(progress) { return 32 - 10 * progress; }
+// 모드마다 하루 장사 규칙이 다르다. progress는 그날 장사의 진행도(0~1).
+// 3분 챌린지: 시간이 갈수록 빨리 익고(바빠지고) 손님은 덜 기다린다. 스토리 모드 설정은 story.js가 날짜별로 만든다.
+const CHALLENGE = {
+  dayLength: 180,                                   // 하루 장사 시간(초)
+  price: 1000,                                      // 붕어빵 한 개 값
+  bagMax: 9,
+  molds: ALL_MOLDS,                                 // 쓸 수 있는 틀 (나머지는 잠김)
+  cook: (p) => 5 - 1.6 * p,                         // 한 면 익는 시간
+  burn: (p) => 6 - 1.5 * p,                         // 다 익은 뒤 타기까지
+  patience: (p) => 32 - 10 * p,
+  need: (p) => 1 + Math.floor(Math.random() * (p < 0.3 ? 2 : 3)),
+  gap: () => 1.6 + Math.random() * 1.2,             // 손님이 떠나고 다음 손님이 올 때까지
+  firstGap: 1.2,
+};
 
 const BREAD_IMG = {
   empty: 'mold.webp',
@@ -203,10 +211,10 @@ $('bag').addEventListener('pointerdown', (e) => { e.preventDefault(); onBag(); }
 document.querySelectorAll('.sound-toggle').forEach((b) => b.addEventListener('click', () => setSound(!soundOn)));
 $('pause-btn').addEventListener('click', () => pauseGame());
 $('resume-btn').addEventListener('click', () => resumeGame());
-$('restart-btn').addEventListener('click', () => { closePause(); startDay(); });
+$('restart-btn').addEventListener('click', () => { closePause(); startChallenge(); });
 $('quit-btn').addEventListener('click', () => { closePause(); running = false; showTitle(); });
-$('start-btn').addEventListener('click', () => startDay());
-$('again-btn').addEventListener('click', () => startDay());
+$('start-btn').addEventListener('click', () => startChallenge());
+$('again-btn').addEventListener('click', () => startChallenge());
 $('help-btn').addEventListener('click', () => $('help').classList.remove('hidden'));
 $('help-close').addEventListener('click', () => $('help').classList.add('hidden'));
 $('history-btn').addEventListener('click', () => $('history').classList.remove('hidden'));
@@ -222,11 +230,14 @@ $('history-list').innerHTML = CHANGELOG.map((r) => `
 $('home-btn').addEventListener('click', () => showTitle());
 
 // ───────────────────────── 게임 상태 ─────────────────────────
+let mode = 'challenge';        // 'challenge' (3분 챌린지) | 'story'
+let cfg = CHALLENGE;
 let running = false;
 let paused = false;
 let elapsed = 0;
 let tool = 'batter';
 let bagCount = 0;
+let bagPerfect = [];           // 봉투 속 붕어빵마다 "완벽하게 구웠는지" (먼저 넣은 것부터)
 let money = 0;
 const stats = { sold: 0, sales: 0, tips: 0, cost: 0, burnt: 0, missed: 0 };
 let customer = null;           // { def, need, wait, max, phase, t }
@@ -234,7 +245,7 @@ let nextCustomerIn = 0;
 let toastUntil = 0;
 let shakeUntil = 0;
 
-function progress() { return Math.min(1, elapsed / DAY_LENGTH); }
+function progress() { return Math.min(1, elapsed / cfg.dayLength); }
 
 function selectTool(name) {
   if (tool !== name) play('bag', 0.35);
@@ -262,6 +273,7 @@ function setMold(m, state) {
 function onMold(i) {
   if (!running) return;
   const m = molds[i];
+  if (m.locked) return hint(mode === 'story' ? Story.lockedHint() : '아직 쓸 수 없는 틀이에요');
   if (elapsed - m.flipAt < 0.22) return;          // 뒤집는 중
   switch (m.state) {
     case 'empty':
@@ -293,9 +305,10 @@ function onMold(i) {
       break;
     case 'done':
       if (tool !== 'stick') return hint('꼬챙이로 봉투에 담아요');
-      if (bagCount >= BAG_MAX) return hint('봉투가 꽉 찼어요');
+      if (bagCount >= cfg.bagMax) return hint('봉투가 꽉 찼어요');
       play('collect');
       bagCount++;
+      bagPerfect.push(m.t <= 1);                  // "다 익었어요!" 뜬 뒤 1초 안에 꺼내면 완벽
       setMold(m, 'empty');
       break;
     case 'burnt':
@@ -377,9 +390,8 @@ function setBubble(html) {
 function spawnCustomer() {
   const def = pickCustomer();
   const p = progress();
-  const maxNeed = p < 0.3 ? 2 : 3;
-  const need = 1 + Math.floor(Math.random() * maxNeed);
-  const max = patienceTime(p);
+  const need = cfg.need(p);
+  const max = cfg.patience(p);
   const c = { def, need, wait: max, max, phase: 'in', t: 0, mood: 'normal', ready: false };
   customer = c;
   setCustomerImg(def.id, () => { c.ready = true; });   // 그림이 준비될 때까지는 숨겨 둔다
@@ -394,7 +406,7 @@ function customerLeaves(happy) {
     customer.mood = 'sad';
     if (!customer.def.noSad) setCustomerImg(customer.def.id + '-sad');
   }
-  nextCustomerIn = 1.6 + Math.random() * 1.2;
+  nextCustomerIn = cfg.gap();
 }
 
 function onBag() {
@@ -409,12 +421,15 @@ function onBag() {
     return;
   }
   bagCount -= customer.need;
-  const tip = customer.wait / customer.max > 0.6 ? 200 * customer.need : 0;
-  const earned = customer.need * PRICE + tip;
+  const allPerfect = bagPerfect.splice(0, customer.need).every(Boolean);
+  const ratio = customer.wait / customer.max;
+  const tip = ratio > 0.6 ? 200 * customer.need : 0;
+  const earned = customer.need * cfg.price + tip;
   money += earned;
   stats.sold += customer.need;
-  stats.sales += customer.need * PRICE;
+  stats.sales += customer.need * cfg.price;
   stats.tips += tip;
+  if (mode === 'story') Story.onServed(ratio, allPerfect);
   play('happy');
   setBubble(`<b>${THANKS[Math.floor(Math.random() * THANKS.length)]}</b>`);
   toast(tip ? `+${earned.toLocaleString()}원 (팁 ${tip}원)` : `+${earned.toLocaleString()}원`);
@@ -422,16 +437,29 @@ function onBag() {
 }
 
 // ───────────────────────── 하루 흐름 ─────────────────────────
-function startDay() {
-  ['title', 'result', 'help', 'history'].forEach((id) => $(id).classList.add('hidden'));
+const SCREENS = ['title', 'result', 'help', 'history'];   // story.js가 스토리 화면을 더한다
+function hideScreens() { SCREENS.forEach((id) => $(id).classList.add('hidden')); }
+
+// 3분 챌린지 시작
+function startChallenge() {
+  mode = 'challenge';
+  cfg = CHALLENGE;
+  startDay(0);
+}
+
+// startMoney: 장사를 시작할 때 가진 돈 (3분 챌린지는 0, 스토리는 그날 아침 돈)
+function startDay(startMoney = 0) {
+  hideScreens();
+  document.body.classList.toggle('story-mode', mode === 'story');
   running = true;
   elapsed = 0;
   bagCount = 0;
-  money = 0;
+  bagPerfect = [];
+  money = startMoney;
   Object.keys(stats).forEach((k) => { stats[k] = 0; });
-  molds.forEach((m) => { setMold(m, 'empty'); m.flipAt = -1; });
+  molds.forEach((m, i) => { setMold(m, 'empty'); m.flipAt = -1; m.locked = !cfg.molds.includes(i); });
   customer = null;
-  nextCustomerIn = 1.2;
+  nextCustomerIn = cfg.firstGap;
   toastUntil = 0;
   selectTool('batter');
   play('start');
@@ -442,6 +470,13 @@ function endDay() {
   running = false;
   play('start');
   playBgm(null);
+  if (mode === 'story') {
+    // 스토리 모드: 정산·상점은 story.js
+    setTimeout(() => { if (!running && currentBgm === null) playBgm('title', true); }, 1200);
+    nextGameTrack = pickGameTrack(nextGameTrack);
+    loadBgm(nextGameTrack);
+    return Story.endDay();
+  }
   // 마감 소리가 끝나면 정산 화면에 시작 화면 음악을 처음부터 깔아 준다
   setTimeout(() => { if (!running && currentBgm === null) playBgm('title', true); }, 1200);
   nextGameTrack = pickGameTrack(nextGameTrack);
@@ -466,8 +501,12 @@ function pauseGame() {
   paused = true;
   play('bag', 0.4);
   for (const k in bgm) bgm[k].pause();
-  const left = Math.max(0, Math.ceil(DAY_LENGTH - elapsed));
-  $('pause-time').textContent = `남은 시간 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  const left = Math.max(0, Math.ceil(cfg.dayLength - elapsed));
+  const head = mode === 'story' ? `Day ${Story.day()} · ` : '';
+  $('pause-time').textContent = `${head}남은 시간 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  // 스토리 모드에서는 "처음부터 다시 하기"를 숨긴다 (다시 하기는 게임 오버 때 한 번뿐)
+  $('restart-btn').classList.toggle('hidden', mode === 'story');
+  $('quit-note').classList.toggle('hidden', mode !== 'story');
   $('pause').classList.remove('hidden');
 }
 function closePause() {
@@ -482,10 +521,11 @@ function resumeGame() {
 }
 
 function showTitle() {
-  ['result', 'help', 'history'].forEach((id) => $(id).classList.add('hidden'));
+  running = false;
+  hideScreens();
   $('title').classList.remove('hidden');
   const best = Number(localStorage.getItem('bb-best') || 0);
-  $('best-text').textContent = best > 0 ? `최고 기록 ${best.toLocaleString()}원` : '';
+  $('best-text').textContent = best > 0 ? `3분 챌린지 최고 기록 ${best.toLocaleString()}원` : '';
   playBgm('title');
 }
 
@@ -493,9 +533,10 @@ function showTitle() {
 function update(dt) {
   elapsed += dt;
   const p = progress();
-  const cook = cookTime(p), burn = burnTime(p);
+  const cook = cfg.cook(p), burn = cfg.burn(p);
 
   molds.forEach((m) => {
+    if (m.locked) return;
     m.t += dt;
     if (m.state === 'side1' && m.t >= cook) setMold(m, 'flip');
     else if (m.state === 'side2' && m.t >= cook) setMold(m, 'done');
@@ -503,6 +544,7 @@ function update(dt) {
       setMold(m, 'burnt');
       stats.burnt++;
       play('burn', 0.6);
+      if (mode === 'story') Story.onBurnt();
     }
   });
 
@@ -516,25 +558,26 @@ function update(dt) {
       if (customer.wait <= 0) {
         stats.missed++;
         play('sad', 0.7);
+        if (mode === 'story') Story.onMissed();
         setBubble('<span style="color:#7a6a5a">너무 오래 기다려서 그냥 갈게요...</span>');
         customerLeaves(false);
       }
     } else if (customer.phase === 'out' && customer.t >= 1.3) {
       customer = null;
     }
-  } else if (elapsed < DAY_LENGTH - 4) {
+  } else if (elapsed < cfg.dayLength - 4) {
     nextCustomerIn -= dt;
     if (nextCustomerIn <= 0) spawnCustomer();
   }
 
-  if (elapsed >= DAY_LENGTH) endDay();
+  if (running && elapsed >= cfg.dayLength) endDay();
 }
 
 function render() {
   const p = progress();
 
   // 시계와 하늘
-  const left = Math.max(0, Math.ceil(DAY_LENGTH - elapsed));
+  const left = Math.max(0, Math.ceil(cfg.dayLength - elapsed));
   $('timer-text').textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
   $('timer-text').style.color = left <= 20 && running ? '#ffb4a2' : '#fff';
   $('clock-icon').style.backgroundPositionX = `${-18 * Math.min(7, Math.floor(p * 8))}px`;
@@ -545,11 +588,13 @@ function render() {
 
   $('money-text').textContent = money.toLocaleString();
   $('sold-text').textContent = stats.sold;
+  if (mode === 'story') Story.renderHud();
 
   // 철판
-  const cook = cookTime(p), burn = burnTime(p);
+  const cook = cfg.cook(p), burn = cfg.burn(p);
   molds.forEach((m) => {
-    const src = SPRITE + BREAD_IMG[m.state];
+    m.el.classList.toggle('locked', !!m.locked);
+    const src = SPRITE + BREAD_IMG[m.locked ? 'empty' : m.state];
     if (m.shown !== src) { m.img.src = src; m.shown = src; }
     const f = (elapsed - m.flipAt) / 0.22;
     m.img.style.transform = f >= 0 && f < 1 ? `scaleY(${Math.abs(Math.cos(f * Math.PI))})` : '';
