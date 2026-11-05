@@ -503,7 +503,17 @@ const Story = (() => {
     Online.top(board).then((list) => {
       if (token === rankToken) renderRanks(board, list, (r) => r.id === hl.id);
     }).catch(() => {
-      if (token !== rankToken || cached) return;
+      if (token !== rankToken) return;
+      if (cached) {
+        // 인터넷이 안 될 때: 마지막으로 받아 둔 목록을 그대로 두고, 언제 것인지 알려 준다
+        const t = new Date(Online.savedAt(board));
+        const when = `${t.getMonth() + 1}/${t.getDate()} ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
+        if (!note) {
+          $s('rank-note').textContent = `인터넷 연결이 안 돼서 마지막으로 받은 목록이에요 (${when})`;
+          $s('rank-note').classList.remove('hidden');
+        }
+        return;
+      }
       $s('rank-list').innerHTML = '<p class="rank-empty">전체 랭킹을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.<br>📱 내 기기 기록은 볼 수 있어요.</p>';
     });
   }

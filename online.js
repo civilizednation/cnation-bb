@@ -14,7 +14,28 @@ const Online = (() => {
   const COL = { story: 'cnation-bb-rank-story', bean: 'cnation-bb-rank-bean', mix: 'cnation-bb-rank-mix' };
   const TIMEOUT = 8000;
 
-  const cache = {};          // board → 상위 10건 (마지막으로 받은 것)
+  // board → 상위 10건 (마지막으로 받은 것). 기기에도 남겨 두어, 인터넷이 안 될 때 보여 준다
+  const STORE_KEY = 'cnation-bb-online-cache-v1';
+  const cache = {}, savedAt = {};
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+    for (const b of Object.keys(COL)) {
+      const e = s[b];
+      if (!e || !Array.isArray(e.list)) continue;
+      // 기기에 남긴 것도 남이 쓴 기록이다: 모양을 다시 확인한다
+      cache[b] = e.list.filter((r) => r && typeof r.name === 'string' && Number.isFinite(r.money)).slice(0, 10);
+      savedAt[b] = Number(e.at) || 0;
+    }
+  } catch { /* 무시 */ }
+  function remember(board, list) {
+    cache[board] = list;
+    savedAt[board] = Date.now();
+    try {
+      const s = {};
+      for (const b of Object.keys(cache)) s[b] = { list: cache[b], at: savedAt[b] };
+      localStorage.setItem(STORE_KEY, JSON.stringify(s));
+    } catch { /* 무시 */ }
+  }
 
   async function call(url, body) {
     const ctl = new AbortController();
@@ -61,7 +82,7 @@ const Online = (() => {
       limit: 10,
     } });
     const list = rows.filter((r) => r.document).map((r) => clean(r.document)).filter(Boolean);
-    cache[board] = list;
+    remember(board, list);
     return list;
   }
 
@@ -77,7 +98,9 @@ const Online = (() => {
       currentDocument: { exists: false },
       updateTransforms: [{ fieldPath: 'createdAt', setToServerValue: 'REQUEST_TIME' }],
     }] });
-    cache[board] = null;
+    // 바로 다시 못 받아도 내 기록이 보이게, 받아 둔 목록에 넣어 둔다
+    const list = (cache[board] || []).concat({ id, ...entry }).sort((a, b) => b.money - a.money).slice(0, 10);
+    remember(board, list);
     return id;
   }
 
@@ -91,5 +114,5 @@ const Online = (() => {
   // 로딩 화면이 끝난 뒤 뒤에서 세 판을 미리 받아 둔다 (실패해도 조용히)
   function preload() { Object.keys(COL).forEach((b) => top(b).catch(() => {})); }
 
-  return { top, add, qualifies, preload, cached: (b) => cache[b] };
+  return { top, add, qualifies, preload, cached: (b) => cache[b], savedAt: (b) => savedAt[b] || 0 };
 })();
