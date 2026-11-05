@@ -2,6 +2,7 @@
 
 // ───────────────────────── 설정 ─────────────────────────
 const BATTER_COST = 300;       // 반죽 한 번 붓는 재료비
+const CREAM_COST = 100;        // 슈크림을 올릴 때 더 드는 재료비 (슈크림 붕어빵은 200원 더 받는다)
 const SPRITE = 'assets/sprites/';
 const SOUND = 'assets/sounds/';
 const ALL_MOLDS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
@@ -26,6 +27,7 @@ const POUR_FRAMES = ['pour1.webp', 'pour2.webp', 'pour3.webp', 'pour4.webp', 'ba
 const POUR_TIME = 0.5;
 
 const BREAD_IMG = {
+  cream: 'batter-cream.webp',
   empty: 'mold.webp',
   batter: 'batter.webp',
   bean: 'batter-bean.webp',
@@ -190,7 +192,7 @@ const molds = [];
 for (let i = 0; i < 9; i++) {
   const el = document.createElement('div');
   el.className = 'mold';
-  el.innerHTML = `<img src="${SPRITE}mold.webp" alt=""><div class="bar"><i></i></div><span class="tag"></span>`;
+  el.innerHTML = `<img src="${SPRITE}mold.webp" alt=""><div class="bar"><i></i></div><span class="tag"></span><span class="kind"></span>`;
   grillEl.appendChild(el);
   molds.push({
     el,
@@ -198,6 +200,8 @@ for (let i = 0; i < 9; i++) {
     bar: el.querySelector('.bar'),
     fill: el.querySelector('.bar i'),
     tag: el.querySelector('.tag'),
+    kindEl: el.querySelector('.kind'),
+    kind: 'bean',
     state: 'empty',
     t: 0,          // 지금 상태에 머문 시간
     flipAt: -1,    // 뒤집기 연출 시작 시각
@@ -211,7 +215,8 @@ tools.forEach((btn) => btn.addEventListener('pointerdown', (e) => {
   e.preventDefault();
   selectTool(btn.dataset.tool);
 }));
-$('bag').addEventListener('pointerdown', (e) => { e.preventDefault(); onBag(); });
+$('bag').addEventListener('pointerdown', (e) => { e.preventDefault(); onBag('bean'); });
+$('bag-cream').addEventListener('pointerdown', (e) => { e.preventDefault(); onBag('cream'); });
 document.querySelectorAll('.sound-toggle').forEach((b) => b.addEventListener('click', () => setSound(!soundOn)));
 $('pause-btn').addEventListener('click', () => pauseGame());
 $('resume-btn').addEventListener('click', () => resumeGame());
@@ -242,6 +247,7 @@ let elapsed = 0;
 let tool = 'batter';
 let bagCount = 0;
 let bagPerfect = [];           // 봉투 속 붕어빵마다 "완벽하게 구웠는지" (먼저 넣은 것부터)
+let creamPerfect = [];         // 슈크림 봉투 (스토리 모드 Day 4부터). 길이가 곧 개수
 let money = 0;
 const stats = { sold: 0, sales: 0, tips: 0, cost: 0, burnt: 0, missed: 0 };
 let customer = null;           // { def, need, wait, max, phase, t }
@@ -287,17 +293,18 @@ function onMold(i) {
       setMold(m, 'pouring');
       break;
     case 'pouring':
-      // 퍼지는 중에 팥을 누르면 기다리지 않고 바로 팥을 올린다
-      if (tool !== 'bean') return hint('반죽을 붓는 중이에요');
-      play('bean');
-      setMold(m, 'bean');
-      break;
     case 'batter':
-      if (tool !== 'bean') return hint('팥을 올려요');
-      play('bean');
-      setMold(m, 'bean');
-      break;
+      // 팥이나 슈크림을 올린다 (퍼지는 중에 눌러도 기다리지 않고 바로 올린다)
+      if (tool === 'bean' || (tool === 'cream' && cfg.cream)) {
+        play('bean');
+        if (tool === 'cream') { stats.cost += CREAM_COST; money -= CREAM_COST; }
+        m.kind = tool;
+        setMold(m, tool);
+        break;
+      }
+      return hint(m.state === 'pouring' ? '반죽을 붓는 중이에요' : cfg.cream ? '팥이나 슈크림을 올려요' : '팥을 올려요');
     case 'bean':
+    case 'cream':
       if (tool !== 'stick') return hint('꼬챙이로 뒤집어요');
       play('flip');
       m.flipAt = elapsed;
@@ -314,10 +321,15 @@ function onMold(i) {
       break;
     case 'done':
       if (tool !== 'stick') return hint('꼬챙이로 봉투에 담아요');
-      if (bagCount >= cfg.bagMax) return hint('봉투가 꽉 찼어요');
+      if (m.kind === 'cream') {
+        if (creamPerfect.length >= cfg.bagMax) return hint('슈크림 봉투가 꽉 찼어요');
+        creamPerfect.push(m.t <= 1);
+      } else {
+        if (bagCount >= cfg.bagMax) return hint(cfg.cream ? '팥 봉투가 꽉 찼어요' : '봉투가 꽉 찼어요');
+        bagCount++;
+        bagPerfect.push(m.t <= 1);                // "다 익었어요!" 뜬 뒤 1초 안에 꺼내면 완벽
+      }
       play('collect');
-      bagCount++;
-      bagPerfect.push(m.t <= 1);                  // "다 익었어요!" 뜬 뒤 1초 안에 꺼내면 완벽
       setMold(m, 'empty');
       break;
     case 'burnt':
@@ -380,7 +392,7 @@ function setBubble(html) {
   const base = parseFloat(getComputedStyle(t).fontSize);
   const fits = () => {
     const cs = getComputedStyle(b);
-    const avail = b.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - $('patience').offsetHeight - 8;
+    const avail = b.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - $('bubble-row').offsetHeight - 8;
     return t.scrollWidth <= t.clientWidth + 1 && t.offsetHeight <= avail;
   };
   for (const h of BUBBLE_HEIGHTS) {
@@ -418,8 +430,9 @@ function customerLeaves(happy) {
   nextCustomerIn = cfg.gap();
 }
 
-function onBag() {
+function onBag(kind = 'bean') {
   if (!running) return;
+  if (cfg.queue) return Story.serve(kind);       // 스토리 모드: 줄 선 손님에게 한 개씩
   play('bag');
   if (!customer || customer.phase !== 'wait') return hint('손님이 아직 없어요');
   if (bagCount < customer.need) {
@@ -463,9 +476,12 @@ function startDay(startMoney = 0) {
   elapsed = 0;
   bagCount = 0;
   bagPerfect = [];
+  creamPerfect = [];
   money = startMoney;
+  document.body.classList.toggle('queue-mode', !!cfg.queue);
+  document.body.classList.toggle('has-cream', !!cfg.cream);
   Object.keys(stats).forEach((k) => { stats[k] = 0; });
-  molds.forEach((m, i) => { setMold(m, 'empty'); m.flipAt = -1; m.locked = !cfg.molds.includes(i); });
+  molds.forEach((m, i) => { setMold(m, 'empty'); m.flipAt = -1; m.kind = 'bean'; m.locked = !cfg.molds.includes(i); });
   customer = null;
   nextCustomerIn = cfg.firstGap;
   toastUntil = 0;
@@ -476,7 +492,7 @@ function startDay(startMoney = 0) {
 
 // 장사가 끝났을 때 팔지 못한 붕어빵 (봉투 속 + 철판 위 다 익은 것). 보상은 없고 안내만 한다
 function leftoverText() {
-  const n = bagCount + molds.filter((m) => m.state === 'done').length;
+  const n = bagCount + creamPerfect.length + molds.filter((m) => m.state === 'done').length;
   return n ? `붕어빵 ${n}개가 남아서 동네 이웃에게 나눠 줬어요. 재료비는 날렸지만 기분은 나쁘지 않아요~` : '';
 }
 
@@ -564,7 +580,9 @@ function update(dt) {
     }
   });
 
-  if (customer && !customer.ready) {
+  if (cfg.queue) {
+    Story.updateQueue(dt);                       // 스토리 모드: 줄 선 손님들
+  } else if (customer && !customer.ready) {
     // 그림을 받는 중: 아직 등장하지 않았으니 기다리는 시간도 흐르지 않는다
   } else if (customer) {
     customer.t += dt;
@@ -581,7 +599,7 @@ function update(dt) {
     } else if (customer.phase === 'out' && customer.t >= 1.3) {
       customer = null;
     }
-  } else if (elapsed < cfg.dayLength - 2) {   // 마감 2초 전부터는 새 손님이 오지 않는다
+  } else if (!customer && elapsed < cfg.dayLength - 2) {   // 마감 2초 전부터는 새 손님이 오지 않는다
     nextCustomerIn -= dt;
     if (nextCustomerIn <= 0) spawnCustomer();
   }
@@ -624,24 +642,38 @@ function render() {
     if (bar >= 0) { m.fill.style.width = `${Math.max(0, Math.min(1, bar)) * 100}%`; m.fill.style.background = color; }
     m.tag.style.display = tag ? '' : 'none';
     if (tag && m.tag.textContent !== tag) m.tag.textContent = tag;
+    // 뒤집으면 겉모습이 같으니 틀 위에 무엇이 들었는지 표시한다 (슈크림이 있는 날만)
+    const flipped = ['side1', 'flip', 'side2', 'done', 'burnt'].includes(m.state);
+    const kindText = cfg.cream && flipped ? (m.kind === 'cream' ? '슈' : '팥') : '';
+    if (m.kindEl.textContent !== kindText) { m.kindEl.textContent = kindText; m.kindEl.className = 'kind ' + (m.kind || ''); }
     if (m.state === 'done') m.img.style.filter = `brightness(${1 + 0.08 * Math.sin(elapsed * 8)})`;
     else if (m.img.style.filter) m.img.style.filter = '';
   });
 
   // 봉투
-  const bagSrc = `${SPRITE}bag${Math.min(3, bagCount)}.webp`;
-  const bagImg = $('bag-img');
-  if (bagImg.getAttribute('src') !== bagSrc) bagImg.setAttribute('src', bagSrc);
-  const bagText = `${bagCount}<small>/${cfg.bagMax}</small>`;
-  const bc = $('bag-count');
-  if (bc.innerHTML !== bagText) bc.innerHTML = bagText;
-  bc.classList.toggle('full', bagCount >= cfg.bagMax);
-  const ready = customer && customer.phase === 'wait' && bagCount >= customer.need;
-  bagImg.style.transform = ready ? `translateY(${-3 * Math.abs(Math.sin(elapsed * 6))}px)` : '';
+  const drawBag = (imgId, countId, prefix, n, ready) => {
+    const src = `${SPRITE}${prefix}${Math.min(3, n)}.webp`;
+    const img = $(imgId);
+    if (img.getAttribute('src') !== src) img.setAttribute('src', src);
+    const text = `${n}<small>/${cfg.bagMax}</small>`;
+    const bc = $(countId);
+    if (bc.innerHTML !== text) bc.innerHTML = text;
+    bc.classList.toggle('full', n >= cfg.bagMax);
+    img.style.transform = ready ? `translateY(${-3 * Math.abs(Math.sin(elapsed * 6))}px)` : '';
+  };
+  if (cfg.queue) {
+    const need = Story.frontNeeds();             // 맨 앞 손님이 아직 받아야 할 개수 {bean, cream}
+    drawBag('bag-img', 'bag-count', 'bag', bagCount, need.bean > 0 && bagCount > 0);
+    drawBag('bag-cream-img', 'bag-cream-count', 'bag-cream', creamPerfect.length, need.cream > 0 && creamPerfect.length > 0);
+  } else {
+    drawBag('bag-img', 'bag-count', 'bag', bagCount, customer && customer.phase === 'wait' && bagCount >= customer.need);
+  }
 
   // 손님
   const cImg = $('customer-img'), bubble = $('bubble');
-  if (!customer || !customer.ready) {
+  if (cfg.queue) {
+    Story.renderQueue();
+  } else if (!customer || !customer.ready) {
     cImg.style.visibility = 'hidden';
     bubble.style.visibility = 'hidden';
   } else {
@@ -701,6 +733,7 @@ const PRELOAD_SPRITES = [
   'timer-pill', 'money-pill', 'bread-pill', 'clock',
   'mold', 'pour1', 'pour2', 'pour3', 'pour4', 'batter', 'batter-bean', 'fresh', 'soso', 'good', 'burnt',
   'bag0', 'bag1', 'bag2', 'bag3', 'kettle', 'kettle-on', 'bean', 'bean-on', 'stick', 'stick-on',
+  'batter-cream', 'cream', 'cream-on', 'bag-cream0', 'bag-cream1', 'bag-cream2', 'bag-cream3',
 ];
 function loadImage(im) {
   return new Promise((done) => {

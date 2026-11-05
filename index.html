@@ -45,7 +45,7 @@
     </div>
     <div id="bubble">
       <div id="bubble-text"></div>
-      <div id="patience"><div id="patience-fill"></div></div>
+      <div id="bubble-row"><span id="order-chip"></span><div id="patience"><div id="patience-fill"></div></div></div>
     </div>
 
     <div id="counter"></div>
@@ -58,6 +58,12 @@
       <button id="bag" aria-label="봉투를 손님에게 건네기">
         <img id="bag-img" src="assets/sprites/bag0.webp" alt="">
         <span id="bag-count">0<small>/9</small></span>
+        <em class="bag-label">팥</em>
+      </button>
+      <button id="bag-cream" aria-label="슈크림 봉투를 손님에게 건네기">
+        <img id="bag-cream-img" src="assets/sprites/bag-cream0.webp" alt="">
+        <span id="bag-cream-count">0<small>/6</small></span>
+        <em class="bag-label">슈크림</em>
       </button>
       <button class="tool" data-tool="batter" aria-label="반죽">
         <img src="assets/sprites/kettle.webp" data-on="assets/sprites/kettle-on.webp" data-off="assets/sprites/kettle.webp" alt="">
@@ -66,6 +72,10 @@
       <button class="tool" data-tool="bean" aria-label="팥">
         <img src="assets/sprites/bean.webp" data-on="assets/sprites/bean-on.webp" data-off="assets/sprites/bean.webp" alt="">
         <span>팥</span>
+      </button>
+      <button class="tool tool-cream" data-tool="cream" aria-label="슈크림">
+        <img src="assets/sprites/cream.webp" data-on="assets/sprites/cream-on.webp" data-off="assets/sprites/cream.webp" alt="">
+        <span>슈크림</span>
       </button>
       <button class="tool" data-tool="stick" aria-label="꼬챙이">
         <img src="assets/sprites/stick.webp" data-on="assets/sprites/stick-on.webp" data-off="assets/sprites/stick.webp" alt="">
