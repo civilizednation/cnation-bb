@@ -138,7 +138,7 @@
           <li>봉투를 <b>한 번 누를 때마다 한 개</b>씩 건네요. 말풍선 아래에 남은 개수가 보여요. 다 받은 손님이 떠나기 전에 더 누르면 <b>덤</b>으로 나가요(돈은 못 받아요).</li>
           <li><b>Day 4</b>부터 <b>슈크림</b> 메뉴가 생겨요. 반죽 위에 슈크림을 올려 구우면 슈크림 봉투에 담겨요. 안 시킨 종류를 건네면 손님이 돌려주고 만족도가 조금 내려가요. <b>Day 8</b>부터는 섞어서 시키는 손님도 와요.</li>
           <li>장사가 끝나면 <b>상점</b>에서 번 돈으로 가게를 업그레이드할 수 있어요. 간판과 가격 인상은 더 벌 수 있지만 장사가 어려워지니, 자신 있을 때 사세요.</li>
-          <li>만족도가 <b>0%</b>가 되면 게임 오버예요. <b>그날 처음부터 다시</b>는 스토리 모드에서 딱 한 번 쓸 수 있고, 다시 한 날은 그날 순이익의 50%를 재기 비용으로 반납해요.</li>
+          <li>만족도가 <b>0%</b>가 되면 <b>게임 오버</b>예요. 다시 할 수 없고 이번 스토리는 거기서 끝나요. 그때까지 모은 돈으로 랭킹에 올릴 수 있어요.</li>
           <li>동네 사람들이 <b>특별 손님</b>으로 Day 1부터 와요. 종이 두 번 울리고 말풍선 위에 이름표가 붙어요. 사람마다 규칙이 달라요. 맨 아래 <b>손님 소개</b>에서 확인해 보세요!</li>
           <li>Day 15까지 마치면 만족도에 따라 엔딩이 달라지고, 그때 <b>가진 돈</b>으로 랭킹에 올라가요.</li>
           <li>하루가 시작될 때 자동으로 저장돼요. 장사 도중에 나가면 다음에 그날 아침부터 다시 해요.</li>
@@ -275,8 +275,13 @@
       <div class="panel story-panel">
         <h2>게임 오버</h2>
         <p class="story-desc" id="go-text"></p>
-        <p class="go-info" id="go-retry-info">다시 하기는 스토리 모드에서 <b>딱 한 번만</b> 쓸 수 있어요.<br>다시 한 날은 <b>그날 순이익의 50%</b>를 재기 비용으로 반납해요.</p>
-        <button class="btn" id="go-retry">그날 처음부터 다시</button>
+        <div class="receipt end-rows">
+          <div class="row total"><span>모은 돈</span><b id="go-money">0원</b></div>
+          <div class="row"><span>문을 닫은 날</span><b id="go-day">Day 1</b></div>
+        </div>
+        <label class="end-label" for="go-name">랭킹에 남길 이름 (8자까지)</label>
+        <input id="go-name" class="end-name" maxlength="8" autocomplete="off" placeholder="이름">
+        <button class="btn" id="go-save">랭킹에 올리기</button>
         <button class="btn" id="go-new">새로 시작</button>
         <button class="btn ghost" id="go-home">처음 화면으로</button>
       </div>
@@ -289,7 +294,6 @@
         <div class="receipt end-rows">
           <div class="row total"><span>모은 돈</span><b id="end-money">0원</b></div>
           <div class="row"><span>손님 만족도</span><b id="end-sat">0%</b></div>
-          <p class="go-info hidden" id="end-retry">다시 하기를 한 번 썼어요.</p>
         </div>
         <label class="end-label" for="end-name">랭킹에 남길 이름 (8자까지)</label>
         <input id="end-name" class="end-name" maxlength="8" autocomplete="off" placeholder="이름">

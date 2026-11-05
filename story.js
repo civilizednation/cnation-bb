@@ -270,7 +270,6 @@ const Story = (() => {
     $s('intro-day').textContent = `Day ${day}`;
     $s('intro-text').textContent = STORY[day];
     const extra = [];
-    if (save.retryDay === day) extra.push('다시 하는 날이에요. 오늘 순이익의 50%는 재기 비용으로 반납해요.');
     if (day === 2 || day === 5) extra.push(`🔓 틀이 ${moldCount(day)}개로 늘었어요!`);
     if (day === 4) extra.push('🍮 슈크림 메뉴 추가! 반죽 위에 슈크림을 올려 구워요. 슈크림 붕어빵은 200원 더 받아요.');
     if (day === 8) extra.push('📝 이제 팥과 슈크림을 섞어 시키는 손님도 와요.');
@@ -325,8 +324,6 @@ const Story = (() => {
     clearQueue();
     const day = today.day;
     const net = money - today.startMoney;
-    const retryCost = save.retryDay === day && net > 0 ? Math.round(net * 0.5 / 10) * 10 : 0;
-    money -= retryCost;
     const row = (label, value, cls = '') => `<div class="row ${cls}"><span>${label}</span><b>${value}</b></div>`;
     const satDiff = Math.round(today.sat) - Math.round(today.satStart);
     $s('sr-title').textContent = `Day ${day} 장사 정산`;
@@ -335,9 +332,8 @@ const Story = (() => {
       row('판매 매출', `+${won(stats.sales)}`, 'plus'),
       row('손님 팁', `+${won(stats.tips)}`, 'plus'),
       row(`재료비 (반죽 1회 ${won(BATTER_COST)})`, `-${won(stats.cost)}`, 'minus'),
-      retryCost ? row('재기 비용 (오늘 순이익의 50%)', `-${won(retryCost)}`, 'minus') : '',
       '<hr>',
-      row('오늘 순이익', won(net - retryCost), 'total'),
+      row('오늘 순이익', won(net), 'total'),
       row('가진 돈', won(money)),
       row('손님 만족도', `${Math.round(today.satStart)}% → ${Math.round(today.sat)}% (${satDiff >= 0 ? '+' : ''}${satDiff})`),
       row('빠른 제공 · 떠난 손님 · 탄 붕어빵', `${today.fast}번 · ${today.left}명 · ${today.burnt}개`),
@@ -349,7 +345,6 @@ const Story = (() => {
     save.money = money;
     save.satisfaction = today.sat;
     save.stats.sold += stats.sold; save.stats.missed += stats.missed; save.stats.burnt += stats.burnt;
-    if (save.retryDay === day) save.retryDay = 0;
     const finished = day >= LAST_DAY;
     if (!finished) save.day = day + 1;
     save.finished = finished;
@@ -410,39 +405,30 @@ const Story = (() => {
     showShop();
   }
 
-  // ── 게임 오버 · 다시 하기 (기획안 8장) ──
+  let ending = null;          // 랭킹에 올릴 스토리 결과 (엔딩 또는 게임 오버)
+  // ── 게임 오버 ──
+  // 그날 다시 하기는 없다(v1.6.1): 게임 오버가 되면 스토리가 끝나고, 그때까지 모은 돈으로 랭킹에 올릴 수 있다
   function gameOver() {
     running = false;
     clearQueue();
     playBgm(null);
     play('sad');
+    save.money = money;          // 그날 번 돈까지 모은 돈으로 친다
+    save.satisfaction = 0;
     today = null;
     mode = 'challenge'; cfg = CHALLENGE;
-    save.gameOver = true;   // 그냥 나갔다 와도 게임 오버 화면부터 다시 보이게
+    save.gameOver = true;        // 이름을 남기기 전에 나갔다 와도 게임 오버 화면부터 다시 보이게
     persist();
     showGameOver();
   }
   function showGameOver() {
-    const canRetry = !save.retryUsed;
-    $s('go-text').textContent = canRetry
-      ? '손님들이 발길을 끊었어요… 가게 문을 닫았습니다.'
-      : '다시 하기를 이미 써서, 이번 스토리는 여기서 끝났어요.';
-    $s('go-retry-info').classList.toggle('hidden', !canRetry);
-    $s('go-retry').classList.toggle('hidden', !canRetry);
-    $s('go-new').classList.toggle('hidden', canRetry);
-    $s('go-home').textContent = canRetry ? '처음 화면으로' : '처음 화면으로';
-    if (!canRetry) clearSave();   // 이 기록은 랭킹에 올라가지 않는다
+    $s('go-text').textContent = `손님들이 발길을 끊었어요… Day ${save.day}에 가게 문을 닫았습니다.`;
+    $s('go-money').textContent = won(save.money);
+    $s('go-day').textContent = `Day ${save.day}`;
+    ending = { money: save.money, sat: 0, key: 'gameover', title: `게임 오버 (Day ${save.day})`, retry: false };
+    $s('go-name').value = Ranks.lastName();
+    $s('go-save').disabled = false;
     show('gameover');
-  }
-  function retry() {
-    // 그날 아침 상태(저장된 돈·업그레이드·만족도)로 되돌아가서 다시 한다
-    const r = readSave();
-    if (r.kind === 'valid') save = r.data;
-    save.retryUsed = true;
-    save.retryDay = save.day;
-    save.gameOver = false;
-    persist();
-    showIntro();
   }
 
   // ── 엔딩 · 랭킹 (기획안 8장) ──
@@ -451,29 +437,28 @@ const Story = (() => {
     { min: 60, key: 'regular', title: '단골 가게 엔딩', text: '손님들이 내년 겨울에도 꼭 와 달래요.' },
     { min: 0, key: 'survive', title: '무사 완주 엔딩', text: '힘들었지만 보름을 끝까지 버텼어요.' },
   ];
-  let ending = null;
   function showEnding() {
     const sat = save.satisfaction;
     const e = ENDINGS.find((x) => sat >= x.min);
-    ending = { money: save.money, sat: Math.round(sat), key: e.key, title: e.title, retry: save.retryUsed };
+    ending = { money: save.money, sat: Math.round(sat), key: e.key, title: e.title, retry: false };
     $s('end-title').textContent = e.title;
     $s('end-text').textContent = e.text;
     $s('end-money').textContent = won(ending.money);
     $s('end-sat').textContent = `${ending.sat}%`;
-    $s('end-retry').classList.toggle('hidden', !ending.retry);
-    $s('end-name').value = '';
+    $s('end-name').value = Ranks.lastName();
     $s('end-save').disabled = false;
     clearSave();   // 엔딩을 보면 스토리 저장은 끝난다
     show('ending');
     playBgm('title');
   }
-  function saveRank() {
+  function saveRank(inputId = 'end-name') {
     if (!ending) return;
-    const name = ($s('end-name').value || '').trim().slice(0, 8) || '이름 없음';
+    const name = ($s(inputId).value || '').trim().slice(0, 8) || '이름 없음';
     Ranks.rememberName(name);
     const entry = { name, money: ending.money, sat: ending.sat, ending: ending.title, retry: ending.retry, date: new Date().toISOString().slice(0, 10) };
     const at = Ranks.add('story', entry);
     ending = null;
+    clearSave();   // 랭킹에 올렸으면 이번 스토리는 끝
     submitRank('story', entry, at);
   }
   // 랭킹 3종: 스토리 모드 · 3분 챌린지 팥 · 3분 챌린지 팥 & 슈크림
@@ -1057,7 +1042,7 @@ const Story = (() => {
   on('sr-next', afterResult);
   on('shop-next', showIntro);
   $s('shop-list').addEventListener('click', (e) => { const b = e.target.closest('.shop-buy'); if (b) buy(b.dataset.id); });
-  on('go-retry', retry);
+  on('go-save', () => saveRank('go-name'));
   on('go-new', () => { beginNew(); });
   on('go-home', () => showTitle());
   on('end-save', saveRank);
