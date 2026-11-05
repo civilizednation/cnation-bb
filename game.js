@@ -739,6 +739,7 @@ function startDay(startMoney = 0) {
   Object.keys(stats).forEach((k) => { stats[k] = 0; });
   molds.forEach((m, i) => { setMold(m, 'empty'); m.flipAt = -1; m.kind = 'bean'; m.locked = !cfg.molds.includes(i); });
   customer = null;
+  $('bubble-name').textContent = '';   // 스토리 특별 손님 이름표가 다음 장사(3분 챌린지 등)에 남지 않게
   chSat = SAT.start; chCombo = 0; chOut = false; chStageNow = 0;
   setBgmRate(1);
   $('stage-banner').classList.remove('show');
