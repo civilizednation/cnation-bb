@@ -653,6 +653,8 @@ const Story = (() => {
   function specialFor(day) {
     if (!today) return null;
     if (forceSpecial) { const f = forceSpecial; forceSpecial = null; return f; }
+    // 매일 첫 번째·두 번째 손님은 동물 손님: 붕어빵을 미리 굽기 전에 급한 특별 손님이 오지 않게
+    if (today.arrivals < 2) return null;
     const max = day >= 9 ? 2 : 1;
     if (today.specials.length >= max) return null;
     const seen = new Set(today.specials.map((x) => x.id).concat(Q.map((e) => e.sp).filter(Boolean)));
