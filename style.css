@@ -619,10 +619,9 @@ img { -webkit-user-drag: none; }
 .receipt .best { color: #6b330c; text-shadow: none; text-align: center; }
 
 /* ───────────────────────── 스토리 모드 ───────────────────────── */
-/* HUD: 스토리 모드에서는 판매 수 대신 손님 만족도 */
-.pill.sat { display: none; }
-body.story-mode .pill.sold { display: none; }
-body.story-mode .pill.sat {
+/* HUD: 판매 수 대신 손님 만족도 (스토리 모드 · 3분 챌린지 모두) */
+.pill.sold { display: none; }
+.pill.sat {
   display: flex;
   flex: 1 1 auto;      /* 시간·돈 칸을 줄이고 남은 폭을 모두 써서 만족도 바를 길게 */
   min-width: 0;
@@ -853,3 +852,19 @@ body.has-cream #bag-count, body.has-cream #bag-cream-count { font-size: 12px; mi
 .guest ul { margin: 0; padding-left: 14px; font-family: var(--font-text); font-size: 12.5px; line-height: 1.5; letter-spacing: -0.2px; color: #4a3220; }
 .guest li + li { margin-top: 2px; }
 .guest b { font-weight: 400; color: #c8560f; }
+
+/* 3분 챌린지 단계 안내 */
+#stage-banner {
+  position: absolute; left: 50%; top: 150px; transform: translate(-50%, 0) scale(.6);
+  padding: 8px 16px; border-radius: 16px; background: rgba(226, 84, 28, .95); color: #fff;
+  font-size: 20px; font-weight: 700; white-space: nowrap; text-shadow: 0 2px 0 rgba(110, 40, 0, .5);
+  box-shadow: 0 4px 0 rgba(110, 40, 0, .35); z-index: 10; pointer-events: none; opacity: 0;
+}
+#stage-banner.show { animation: stage-pop 2.2s ease-out forwards; }
+@keyframes stage-pop {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(.6); }
+  12% { opacity: 1; transform: translate(-50%, 0) scale(1.08); }
+  20% { transform: translate(-50%, 0) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -14px) scale(1); }
+}

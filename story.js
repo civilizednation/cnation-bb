@@ -96,9 +96,7 @@ const Story = (() => {
   }
 
   // ── 만족도 (기획안 4장) ──
-  // 만족도 규칙 (조정안): 오르기는 조건부·완만하게, 실수는 아프게. 80% 이상에서는 오르는 양이 절반
-  const SAT = { start: 70, fast: 2, normal: 1, slow: 0, late: -1, comboEvery: 5, combo: 1, perfect: 1,
-    leave: -12, leaveSpecial: -15, burn: -3, wrong: -4, highAt: 80, highMul: 0.5 };
+  // 만족도 규칙(SAT, satAdd, satServeDelta)은 3분 챌린지와 같이 쓰려고 game.js에 있다
 
   // ── 저장 (기획안 9장: 보내 주신 저장 코드를 이 게임에 맞게 고친 것) ──
   const SAVE_KEY = 'cnation-bb-story-v1', DB = 'cnation-bb-saves', STORE = 'slots', SAVE_VERSION = 1;
@@ -303,30 +301,23 @@ const Story = (() => {
   // ── 장사 중 만족도 ──
   function changeSat(delta) {
     if (!today) return;
-    if (delta > 0 && today.sat >= SAT.highAt) delta *= SAT.highMul;   // 높을수록 손님 기대치도 높다
-    today.sat = Math.max(0, Math.min(100, today.sat + delta));
+    today.sat = satAdd(today.sat, delta);
     if (today.sat <= 0 && running) gameOver();
   }
   function onServed(ratio, allPerfect) {
     today.served++;
     today.combo++;
-    // 기다린 정도: 70% 넘게 남음 = 빠름, 35~70% 보통, 15~35% 느림(0), 15% 미만 겨우(-1)
-    let d = ratio > 0.7 ? SAT.fast : ratio > 0.35 ? SAT.normal : ratio > 0.15 ? SAT.slow : SAT.late;
     if (ratio > 0.7) today.fast++;
-    if (today.combo % SAT.comboEvery === 0) { d += SAT.combo; setTimeout(() => toast(`🔥 ${today.combo}콤보! 만족도 보너스`), 650); }
-    if (allPerfect) { d += SAT.perfect; today.perfect++; }
-    changeSat(d);
+    if (today.combo % SAT.comboEvery === 0) setTimeout(() => toast(`🔥 ${today.combo}콤보! 만족도 보너스`), 650);
+    if (allPerfect) today.perfect++;
+    changeSat(satServeDelta(ratio, today.combo, allPerfect));
   }
   function onMissed(penalty, special) { today.left++; today.combo = 0; changeSat(penalty || (special ? SAT.leaveSpecial : SAT.leave)); }
   function onBurnt() { today.burnt++; today.combo = 0; changeSat(SAT.burn); }
 
   function renderHud() {
     const v = today ? today.sat : save ? save.satisfaction : SAT.start;
-    $s('sat-text').textContent = Math.round(v);
-    $s('sat-face').textContent = v >= 70 ? '😊' : v >= 40 ? '😐' : '😟';
-    const f = $s('sat-fill');
-    f.style.width = `${v}%`;
-    f.style.background = v >= 70 ? '#5dbb63' : v >= 40 ? '#f5a623' : '#e74c3c';
+    drawSat(v);
   }
 
   // ── 하루 끝: 정산 → 상점 ──
@@ -524,14 +515,14 @@ const Story = (() => {
   function renderRanks(board, ranks, isMe) {
     const sub = (r) => board === 'story'
       ? `${escapeHtml(r.ending || '')} · 만족도 ${r.sat}% · ${r.date}`
-      : `${r.sold ? `판매 ${r.sold}개 · ` : ''}${r.date || ''}`;
+      : [Number.isFinite(r.net) ? `순이익 ${won(r.net)}` : '', Number.isFinite(r.sat) ? `만족도 ${r.sat}%` : '', r.date || ''].filter(Boolean).join(' · ');
     const empty = rankScope === 'online' ? '아직 전체 기록이 없어요. 첫 기록의 주인공이 되어 보세요!'
       : `아직 기록이 없어요. ${board === 'story' ? '스토리 모드를 끝까지 해 보세요!' : '3분 챌린지에 도전해 보세요!'}`;
     $s('rank-list').innerHTML = ranks.length
       ? ranks.map((r, i) => `<div class="rank-row ${isMe(r, i) ? 'me' : ''}">
           <span class="rank-no">${i + 1}</span>
           <span class="rank-name">${escapeHtml(r.name)}${r.retry ? ' <small>(다시 하기 사용)</small>' : ''}<small>${sub(r)}</small></span>
-          <b>${won(r.money)}</b>
+          <b>${board === 'story' ? won(r.money) : `${r.money.toLocaleString()}점`}</b>
         </div>`).join('')
       : `<p class="rank-empty">${empty}</p>`;
   }
