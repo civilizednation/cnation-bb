@@ -839,3 +839,18 @@ body.has-cream #bag-count, body.has-cream #bag-cream-count { font-size: 12px; mi
 .rank-scope button { flex: 1; white-space: nowrap; padding: 4px 0; border-radius: 9px; font-size: 13px; font-weight: 700; color: #8a5a35; }
 .rank-scope button.on { background: #fff8ea; color: #6b330c; box-shadow: 0 1px 2px rgba(0, 0, 0, .15); }
 .rank-note { font-family: var(--font-text); font-size: 12px; color: #c8560f; margin: 0; }
+
+/* 게임 방법 > 손님 소개 */
+.guest-sub { font-family: var(--font-text); font-size: 12.5px; color: #8a5a35; margin: 6px 0 6px; text-align: left; }
+.guest-animals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.guest-animals figure { margin: 0; text-align: center; }
+.guest-animals img { width: 100%; max-width: 62px; aspect-ratio: 1; object-fit: contain; }
+.guest-animals figcaption { font-family: var(--font-text); font-size: 11px; color: #6b4a2e; margin-top: -2px; }
+.guest-rules { margin-bottom: 8px; }
+.guest-people { display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.guest { display: flex; gap: 8px; align-items: flex-start; padding: 8px; border-radius: 14px; background: rgba(255, 250, 238, .75); }
+.guest > img { flex: none; width: 64px; height: 64px; object-fit: contain; object-position: 50% 100%; }
+.guest h4 { margin: 0 0 2px; font-size: 17px; font-weight: 700; color: #6b330c; }
+.guest ul { margin: 0; padding-left: 14px; font-family: var(--font-text); font-size: 12.5px; line-height: 1.5; letter-spacing: -0.2px; color: #4a3220; }
+.guest li + li { margin-top: 2px; }
+.guest b { font-weight: 400; color: #c8560f; }

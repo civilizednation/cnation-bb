@@ -47,7 +47,7 @@ const Story = (() => {
     '동네 신문에 우리 가게가 실렸다. 오늘은 더 바빠질 것 같다.',
     '손이 빨라졌다. 이제 철판 소리만 들어도 언제 뒤집을지 안다.',
     '마지막 주말. 동네 사람들이 모두 들르는 것 같다.',
-    '보름의 마지막 날. 오늘을 최고의 하루로 만들자!',
+    '보름의 마지막 날. 골목에 산타 할아버지가 나타났다는 소문이…! 오늘을 최고의 하루로 만들자!',
   ];
 
   // 틀은 상점이 아니라 날짜에 따라 늘어난다: Day 1 4칸, Day 2 6칸, Day 5 9칸
@@ -313,7 +313,7 @@ const Story = (() => {
     if (allPerfect) { d += SAT.perfect; today.perfect++; }
     changeSat(d);
   }
-  function onMissed() { today.left++; today.combo = 0; changeSat(SAT.leave); }
+  function onMissed(penalty) { today.left++; today.combo = 0; changeSat(penalty || SAT.leave); }
   function onBurnt() { today.burnt++; changeSat(SAT.burn); }
 
   function renderHud() {
@@ -648,6 +648,30 @@ const Story = (() => {
     hyun: { name: '휴가 나온 현이', from: 1, need: [5, 8], patience: 0.8, tipEach: 400, satBonus: 5,
       lines: ['휴가 나왔습니다! {n} 부탁드립니다!', '부대에서 제일 생각났던 게 이거예요. {n}요!', '윤이 형입니다. 엄마가 꼭 들르래요. {n}요!', '복귀 전에 동기들 줄 {n} 포장이요!', '휴가가 짧아서요… {n} 빨리 부탁드립니다!'],
       thanks: '충성! 복귀해서도 이 맛 생각날 거예요!' },
+    // ── v1.5.0 새 특별 손님 ──
+    // 배고픈 나그네: 돈을 내지 않는다. 주면 만족도 +3, 못 주고 떠나면 동네 소문이 나빠져 -20
+    beggar: { name: '배고픈 나그네', from: 1, need: [1, 2], free: true, satBonus: 3, leavePenalty: -20, happyImg: true,
+      lines: ['며칠째 굶었어요… {n}만 주실 수 있나요?', '돈은 없지만… {n}만 나눠 주세요.', '꼭 갚을게요… {n}만 부탁해요.', '냄새만 맡아도 행복하네요… {n}만요.', '날이 너무 추워요… {n}만 주시면 안 될까요?'],
+      leaveLine: '…배가 너무 고프네요. 그냥 갈게요.',
+      thanks: '고맙습니다… 복 받으실 거예요.' },
+    // 건물주 아저씨: 주문하지 않는다. 자랑을 실컷 하고 용돈만 주고 간다 (드물게 온다)
+    landlord: { name: '건물주 아저씨', from: 1, noOrder: true, weight: 1 / 3, patience: 99, gift: [5000, 20000], happyImg: true,
+      lines: ['저기 저 건물 보이지? 내 거야. 그 옆 건물도 내 거고~', '이 골목 반이 내 땅이야. 허허, 장사는 잘 되나?', '어제 건물을 하나 더 샀어. 요즘 심심해서 말이야~', '붕어빵? 난 안 먹어. 근데 열심히 하는 게 보기 좋아서~', '저기 빨간 차 내 거야. 세 대 중에 제일 싼 거~'],
+      thanks: '자, 용돈이야! 장사 잘하라고~ 허허허!' },
+    // 외국인 관광객: 빨리 주면 한 개에 500원씩 팁
+    tourist: { name: '외국인 관광객', from: 1, need: [2, 4], tipEach: 500,
+      lines: ['Hello! {n}, please! 한국 최고!', 'Wow, fish bread! {n} please~', 'I saw it on YouTube! {n} 주세요!', '{n}, please! 사진 찍어도 돼요?', 'Excuse me~ {n}! So cute!'],
+      thanks: 'Delicious! 정말 맛있어요! 👍' },
+    // 닭살 커플: 팥·슈크림을 하나씩 나눠 먹는 세트 주문. 한 번에 맞게 주면 +4, 한 번이라도 잘못 주면 -6
+    couple: { name: '닭살 커플', from: 1, need: [2, 4], couple: true, satBonus: 4, wrongPenalty: -6,
+      lines: ['자기야 뭐 먹을래? 우리 {n}요~', '오늘 100일이에요! {n} 주세요~', '우리 자기가 붕어빵 좋아해서요. {n}요!', '하나씩 나눠 먹을 거예요~ {n}요!', '자기 손 시리지? 얼른 {n} 주세요~'],
+      wrongLine: '헐… 우리 그거 안 시켰는데요?',
+      thanks: '역시 여기가 우리 데이트 코스예요!' },
+    // 산타 할아버지: 마지막 날(Day 15)에만, 장사 중간쯤 딱 한 번 오는 보스. 큰 주문, 다 주면 10만 원 선물
+    santa: { name: '산타 할아버지', from: 99, boss: true, need: [16, 20], patience: 3, bonus: 100000, satBonus: 5, leavePenalty: -15, happyImg: true, noSad: true,
+      lines: ['호호호! 착한 아이들 선물로 {n} 부탁하네!', '썰매에 실을 붕어빵, {n} 준비해 주게!', '루돌프도 기다린다네. {n} 부탁하네!', '올해 마지막 선물은 붕어빵이야! {n}일세!', '전 세계 아이들이 기다린다네! {n} 부탁하네!'],
+      leaveLine: '허허… 올해는 선물을 못 주겠구나…',
+      thanks: '호호호! 올해 최고의 선물이구나! 자, 내 선물도 받게!' },
   };
   let buzzUntil = 0;   // 윤이 엄마가 소문을 내면 잠깐 손님이 더 자주 온다
   let forceSpecial = null;   // 시험용 (_debug.forceSpecial)
@@ -656,16 +680,22 @@ const Story = (() => {
     if (forceSpecial) { const f = forceSpecial; forceSpecial = null; return f; }
     // 매일 첫 번째·두 번째 손님은 동물 손님: 붕어빵을 미리 굽기 전에 급한 특별 손님이 오지 않게
     if (today.arrivals < 2) return null;
+    // 산타: 마지막 날 장사가 35% 지나면 딱 한 번 (하루 인원 제한과 상관없이)
+    if (day === LAST_DAY && !today.santa && elapsed >= cfg.dayLength * 0.35) { today.santa = true; return 'santa'; }
     const max = day >= 9 ? 2 : 1;
     if (today.specials.length >= max) return null;
     const seen = new Set(today.specials.map((x) => x.id).concat(Q.map((e) => e.sp).filter(Boolean)));
     const ok = Object.keys(SPECIALS).filter((id) => {
       const sp = SPECIALS[id];
-      if (seen.has(id) || day < sp.from) return false;
+      if (seen.has(id) || day < sp.from || sp.boss) return false;
       return true;
     });
     if (!ok.length || Math.random() > 1 / 6) return null;
-    return ok[Math.floor(Math.random() * ok.length)];
+    // 손님마다 뽑힐 가중치 (기본 1, 건물주는 1/3)
+    const total = ok.reduce((a, id) => a + (SPECIALS[id].weight || 1), 0);
+    let r = Math.random() * total;
+    for (const id of ok) { r -= SPECIALS[id].weight || 1; if (r < 0) return id; }
+    return ok[ok.length - 1];
   }
   // 주문 n개를 종류로 나눈다 (슈크림 날만)
   function splitOrder(n) {
@@ -681,6 +711,7 @@ const Story = (() => {
     const def = sp ? { id: spId, lines: sp.lines } : pickQueued();
     let order;
     if (spId === 'grandpa' && save.grandpaOrder) order = { ...save.grandpaOrder };
+    else if (sp && sp.noOrder) order = { bean: 0, cream: 0 };
     else if (sp) {
       // 동네 사람은 처음부터 모두 온다. 틀이 적은 초반(Day 1~2)에는 단체 주문을 조금 줄인다
       const n = sp.need[0] + Math.floor(Math.random() * (sp.need[1] - sp.need[0] + 1));
@@ -689,6 +720,10 @@ const Story = (() => {
     }
     else order = makeOrder();
     if (spId === 'girl') order = cfg.cream && Math.random() < 0.4 ? { bean: 0, cream: 1 } : { bean: 1, cream: 0 };
+    // 산타: 큰 주문은 팥·슈크림 반반
+    if (spId === 'santa' && cfg.cream) { const n = order.bean + order.cream; order = { bean: Math.ceil(n / 2), cream: Math.floor(n / 2) }; }
+    // 커플: 둘이 나눠 먹는 세트 (슈크림이 있으면 팥·슈크림 반반, 없으면 팥 2개)
+    if (sp && sp.couple) { const k = Math.random() < 0.5 ? 1 : 2; order = cfg.cream ? { bean: k, cream: k } : { bean: 2, cream: 0 }; }
     const el = document.createElement('div');
     el.className = 'qc';
     const img = document.createElement('img');
@@ -755,6 +790,7 @@ const Story = (() => {
       return;
     }
     if (e.state !== 'wait') return;
+    if (e.sp && SPECIALS[e.sp].noOrder) return hint('붕어빵은 안 드신대요');
     if (e.left[kind] > 0) {
       if (!takeBread(kind)) e.perfect = false;
       e.left[kind]--;
@@ -765,7 +801,8 @@ const Story = (() => {
     } else {
       // 안 시킨 종류 (또는 이미 다 받은 종류): 돌려주고 만족도 조금 감소
       today.wrong++;
-      changeSat(SAT.wrong);
+      const wsp = e.sp ? SPECIALS[e.sp] : null;
+      changeSat(wsp && wsp.wrongPenalty ? wsp.wrongPenalty : SAT.wrong);
       play('sad', 0.6);
       e.wrongOnce = true;
       if (e.sp === 'grandpa') {
@@ -775,7 +812,8 @@ const Story = (() => {
         e.line = `늘 먹던 걸로… <span class="n">${orderPhrase(e.order)}</span>일세.`;
         e.restoreAt = elapsed + 1.6;
       } else {
-        setBubble('<span style="color:#c0392b">그건 안 시켰어요!</span>');
+        if (wsp && wsp.couple) e.img.src = (customerImgCache[e.def.id + '-sad'] || e.img).src;   // 커플은 바로 화난다
+        setBubble(`<span style="color:#c0392b">${wsp && wsp.wrongLine ? wsp.wrongLine : '그건 안 시켰어요!'}</span>`);
         e.restoreAt = elapsed + 1.1;
       }
     }
@@ -813,6 +851,12 @@ const Story = (() => {
     if (sp && sp.fixedPrice) { sales = sp.fixedPrice; tip = 0; }                          // 꼬마: 500원
     if (sp && sp.bonus) extra = sp.bonus;                                                   // 원장님: 단체 보너스
     if (sp && sp.satBonus) satBonus = sp.satBonus;
+    if (sp && sp.free) { sales = 0; tip = 0; }                                              // 나그네: 무료
+    if (sp && sp.couple && e.wrongOnce) { satBonus = 0; thanks = '…분위기 다 깨졌어. 그래도 맛은 있네.'; }
+    if (sp && sp.noOrder) {                                                                 // 건물주: 용돈
+      tip = Math.round((sp.gift[0] + Math.random() * (sp.gift[1] - sp.gift[0])) / 1000) * 1000; sales = 0;
+    }
+    if (sp && sp.happyImg && !(sp.couple && e.wrongOnce) && customerImgCache[e.def.id + '-happy']) e.img.src = customerImgCache[e.def.id + '-happy'].src;
     if (e.sp === 'grandpa') {
       if (!e.hide) thanks = '고맙네. 이게 내 단골 주문일세, 기억해 두게!';                           // 처음 온 날
       else if (!e.wrongOnce) { tip = Math.max(tip, 200 * cnt) * 2; satBonus = 3; }          // 기억했다!
@@ -834,14 +878,16 @@ const Story = (() => {
     stats.sales += sales;
     stats.tips += tip;
     play('happy');
-    toast(tip ? `+${won(sales + tip)} (팁 ${won(tip)})` : `+${won(sales)}`);
+    if (sp && sp.noOrder) toast(`🍀 럭키! 건물주 용돈 +${won(tip)}`);
+    else if (sp && sp.free) toast('나눔 완료! 동네에 좋은 소문이 나요');
+    else toast(tip ? `+${won(sales + tip)} (팁 ${won(tip)})` : `+${won(sales)}`);
     e.state = 'thanks';
     e.t = 0;
     e.restoreAt = 0;
     setBubble(`<b>${thanks || THANKS[Math.floor(Math.random() * THANKS.length)]}</b>`);
-    onServed(ratio, e.perfect);
+    if (!(sp && sp.noOrder)) onServed(ratio, e.perfect);   // 건물주는 판 게 아니라서 만족도·콤보와 상관없다
     if (satBonus) changeSat(satBonus);
-    if (extra) setTimeout(() => toast(`단체 보너스 +${won(extra)}!`), 700);
+    if (extra) setTimeout(() => toast(e.sp === 'santa' ? `🎅 산타의 선물 +${won(extra)}!` : `단체 보너스 +${won(extra)}!`), 700);
   }
 
   function leave(e, happy) {
@@ -861,8 +907,9 @@ const Story = (() => {
     if (e.sp) { const rec = today.specials.find((x) => x.id === e.sp && x.ok === null); if (rec) rec.ok = false; }
     stats.missed++;
     play('sad', 0.7);
-    if (Q[0] === e) setBubble('<span style="color:#7a6a5a">너무 오래 기다려서 그냥 갈게요...</span>');
-    onMissed();
+    const sp = e.sp ? SPECIALS[e.sp] : null;
+    if (Q[0] === e) setBubble(`<span style="color:#7a6a5a">${sp && sp.leaveLine ? sp.leaveLine : '너무 오래 기다려서 그냥 갈게요...'}</span>`);
+    onMissed(sp && sp.leavePenalty);
     leave(e, false);
   }
 
@@ -886,8 +933,9 @@ const Story = (() => {
         const speed = i === 0 ? (bubbleOwner === e ? 1 : 0.5) : Math.pow(0.5, i);
         e.wait -= dt * speed;
         if (e.restoreAt && elapsed >= e.restoreAt) { e.restoreAt = 0; if (bubbleOwner === e) setBubble(lineHtml(e)); }
+        if (i === 0 && bubbleOwner === e && e.sp && SPECIALS[e.sp].noOrder) { e.brag = (e.brag || 0) + dt; if (e.brag >= 3) { complete(e); return; } }
         if (e.wait <= 0) leaveSad(e);
-      } else if (e.state === 'thanks' && e.t >= THANKS_WAIT) {
+      } else if (e.state === 'thanks' && e.t >= (e.sp && SPECIALS[e.sp].noOrder ? 1.6 : THANKS_WAIT)) {   // 건물주 인사는 조금 더 길게
         leave(e, true);
       }
     });
@@ -959,7 +1007,7 @@ const Story = (() => {
       if (i === 0 || i >= SLOTS.length || e.state === 'out') { setStyle(e.tag, 'display', 'none'); return; }
       setStyle(e.tag, 'display', '');
       const span = e.tag.firstChild, bar = e.tag.lastChild.firstChild;
-      const text = e.hide ? '?' : countText(e.order);
+      const text = e.hide ? '?' : (e.order.bean + e.order.cream) ? countText(e.order) : '💰';
       if (span.textContent !== text) span.textContent = text;
       const r = Math.max(0, e.wait / e.max);
       setStyle(bar, 'transform', `scaleX(${r.toFixed(3)})`);
@@ -994,7 +1042,8 @@ const Story = (() => {
       setStyle(fill, 'width', `${(r * 100).toFixed(1)}%`);
       setStyle(fill, 'background', r > 0.6 ? '#5dbb63' : r > 0.3 ? '#f5a623' : '#e74c3c');
       const chip = $('order-chip');
-      const ct = owner.hide && owner.state === 'wait' ? countText(owner.order, owner.left).replace(/\d+/g, '?') : countText(owner.order, owner.left);
+      const ct = !(owner.order.bean + owner.order.cream) ? '💰'
+        : owner.hide && owner.state === 'wait' ? countText(owner.order, owner.left).replace(/\d+/g, '?') : countText(owner.order, owner.left);
       if (chip.textContent !== ct) chip.textContent = ct;
     }
   }

@@ -548,12 +548,15 @@ CUSTOMERS.forEach((c) => [c.id, c.id + '-sad'].forEach((name) => {
   im.src = SPRITE + name + '.webp';
   customerImgCache[name] = im;
 }));
-// 스토리 모드 특별 손님(사람) 그림도 미리 받아 둔다
-['courier', 'principal', 'grandpa', 'girl', 'boy', 'auntie', 'yuni', 'hyun'].forEach((id) => [id, id + '-sad'].forEach((name) => {
-  const im = new Image();
-  im.src = SPRITE + name + '.webp';
-  customerImgCache[name] = im;
-}));
+// 스토리 모드 특별 손님(사람) 그림도 미리 받아 둔다 (평소 / -sad 실망 / -happy 받고 기뻐함)
+['courier', 'principal', 'grandpa', 'girl', 'boy', 'auntie', 'yuni', 'hyun', 'couple', 'tourist']
+  .flatMap((id) => [id, id + '-sad'])
+  .concat(['beggar', 'beggar-happy', 'landlord', 'landlord-happy', 'santa', 'santa-happy'])
+  .forEach((name) => {
+    const im = new Image();
+    im.src = SPRITE + name + '.webp';
+    customerImgCache[name] = im;
+  });
 let customerImgToken = 0;
 // 그림을 완전히 그릴 수 있게 된 다음에 바꾼다 (늦게 끝난 이전 요청은 무시)
 function setCustomerImg(name, onReady) {
