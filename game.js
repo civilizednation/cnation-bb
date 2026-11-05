@@ -9,16 +9,27 @@ const ALL_MOLDS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 
 // 모드마다 하루 장사 규칙이 다르다. progress는 그날 장사의 진행도(0~1).
 // 3분 챌린지: 시간이 갈수록 빨리 익고(바빠지고) 손님은 덜 기다린다. 스토리 모드 설정은 story.js가 날짜별로 만든다.
+// 3분 챌린지는 1분마다 단계가 확 바뀐다 (아침 → 저녁 → 밤). 단계가 바뀔 때 화면에 크게 알린다
+const CH_STAGES = [
+  { msg: '', cook: 5.0, burn: 6.0, patience: 30, need: [1, 2], gap: [1.6, 2.8], tip: 200, bgm: 1 },
+  { msg: '🌇 2단계 · 저녁 손님이 몰려와요!', cook: 4.0, burn: 5.0, patience: 22, need: [1, 3], gap: [1.0, 1.8], tip: 300, bgm: 1.08 },
+  { msg: '🌙 3단계 · 밤 러시! 마지막 1분!', cook: 3.2, burn: 4.0, patience: 15, need: [2, 4], gap: [0.5, 1.0], tip: 400, bgm: 1.15 },
+];
+const chStageIndex = (p) => Math.min(CH_STAGES.length - 1, Math.floor(p * CH_STAGES.length));
+const chStage = (p) => CH_STAGES[chStageIndex(p)];
+const randIn = ([a, b]) => a + Math.random() * (b - a);
 const CHALLENGE = {
   dayLength: 180,                                   // 하루 장사 시간(초)
   price: 1000,                                      // 붕어빵 한 개 값
   bagMax: 9,
   molds: ALL_MOLDS,                                 // 쓸 수 있는 틀 (나머지는 잠김)
-  cook: (p) => 5 - 1.6 * p,                         // 한 면 익는 시간
-  burn: (p) => 6 - 1.5 * p,                         // 다 익은 뒤 타기까지
-  patience: (p) => 32 - 10 * p,
-  need: (p) => 1 + Math.floor(Math.random() * (p < 0.3 ? 2 : 3)),
-  gap: () => 1.6 + Math.random() * 1.2,             // 손님이 떠나고 다음 손님이 올 때까지
+  cook: (p) => chStage(p).cook,                     // 한 면 익는 시간
+  burn: (p) => chStage(p).burn,                     // 다 익은 뒤 타기까지
+  patience: (p) => chStage(p).patience,
+  need: (p) => { const [a, b] = chStage(p).need; return a + Math.floor(Math.random() * (b - a + 1)); },
+  gap: () => randIn(chStage(progress()).gap),       // 손님이 떠나고 다음 손님이 올 때까지
+  tipEach: (p) => chStage(p).tip,                   // 인내심이 60% 넘게 남았을 때 한 개당 팁
+  stages: true,
   firstGap: 1.2,
   variant: 'bean',                                  // 랭킹 이름: 3분 챌린지 팥
 };
@@ -48,9 +59,35 @@ function makeOrderFor(n) {
   return Math.random() < cfg.creamRatio ? { bean: 0, cream: n } : { bean: n, cream: 0 };
 }
 
+// ───────────────────────── 손님 만족도 (스토리 모드 · 3분 챌린지 공용 규칙) ─────────────────────────
+// 오르기는 조건부·완만하게, 실수는 아프게. 80% 이상에서는 오르는 양이 절반
+const SAT = { start: 70, fast: 2, normal: 1, slow: 0, late: -1, comboEvery: 5, combo: 1, perfect: 1,
+  leave: -12, leaveSpecial: -15, burn: -3, wrong: -4, highAt: 80, highMul: 0.5 };
+function satAdd(cur, delta) {
+  if (delta > 0 && cur >= SAT.highAt) delta *= SAT.highMul;   // 높을수록 손님 기대치도 높다
+  return Math.max(0, Math.min(100, cur + delta));
+}
+// 다 건넸을 때: 기다린 정도(70% 넘게 남음 빠름, 35~70% 보통, 15~35% 느림 0, 15% 미만 겨우 -1) + 5연속 콤보 + 완벽
+function satServeDelta(ratio, combo, allPerfect) {
+  let d = ratio > 0.7 ? SAT.fast : ratio > 0.35 ? SAT.normal : ratio > 0.15 ? SAT.slow : SAT.late;
+  if (combo % SAT.comboEvery === 0) d += SAT.combo;
+  if (allPerfect) d += SAT.perfect;
+  return d;
+}
+function drawSat(v) {
+  $('sat-text').textContent = Math.round(v);
+  $('sat-face').textContent = v >= 70 ? '😊' : v >= 40 ? '😐' : '😟';
+  const f = $('sat-fill');
+  f.style.width = `${v}%`;
+  f.style.background = v >= 70 ? '#5dbb63' : v >= 40 ? '#f5a623' : '#e74c3c';
+}
+// 3분 챌린지 점수 = 순이익 × 만족도 배수 (0% ×0.5 … 50% ×1.0 … 100% ×1.5)
+const satMultiplier = (sat) => 0.5 + Math.round(sat) / 100;
+
 // ───────────────────────── 랭킹 (기기 안 상위 10개) ─────────────────────────
 // story: 스토리 모드(엔딩 때 가진 돈) · bean: 3분 챌린지 팥 · mix: 3분 챌린지 팥 & 슈크림
-const RANK_KEYS = { story: 'cnation-bb-story-rank-v1', bean: 'cnation-bb-rank-bean-v1', mix: 'cnation-bb-rank-mix-v1' };
+// 3분 챌린지는 v1.6.0부터 점수(순이익 × 만족도 배수)로 매겨서 v2로 새로 시작한다 (v1 기록은 기기에 그대로 남아 있음)
+const RANK_KEYS = { story: 'cnation-bb-story-rank-v1', bean: 'cnation-bb-rank-bean-v2', mix: 'cnation-bb-rank-mix-v2' };
 const RANK_NAMES = { story: '스토리 모드', bean: '3분 챌린지 팥', mix: '3분 챌린지 팥 & 슈크림' };
 const Ranks = {
   read(board) {
@@ -74,12 +111,6 @@ const Ranks = {
   lastName() { try { return localStorage.getItem('cnation-bb-name') || ''; } catch { return ''; } },
   rememberName(n) { try { localStorage.setItem('cnation-bb-name', n); } catch { /* 무시 */ } },
 };
-// 예전 "최고 기록"(이름 없이 숫자만)을 3분 챌린지 팥 랭킹으로 옮긴다
-try {
-  const old = Number(localStorage.getItem('bb-best') || 0);
-  if (old > 0 && !Ranks.read('bean').length) Ranks.add('bean', { name: '예전 기록', money: old, sold: 0, date: '' });
-  localStorage.removeItem('bb-best');
-} catch { /* 무시 */ }
 
 // 반죽을 부으면 0.5초 동안 퍼지는 장면 (무늬 없는 반죽 → 팥을 올려도 무늬 없음 → 뒤집으면 무늬가 보인다)
 const POUR_FRAMES = ['pour1.webp', 'pour2.webp', 'pour3.webp', 'pour4.webp', 'batter.webp'];
@@ -428,6 +459,12 @@ let bagPerfect = [];           // 봉투 속 붕어빵마다 "완벽하게 구�
 let creamPerfect = [];         // 슈크림 봉투 (스토리 모드 Day 4부터). 길이가 곧 개수
 let money = 0;
 const stats = { sold: 0, sales: 0, tips: 0, cost: 0, burnt: 0, missed: 0 };
+// 3분 챌린지 만족도 (스토리 모드는 story.js의 today.sat)
+let chSat = SAT.start, chCombo = 0, chOut = false, chStageNow = 0;
+function chChange(delta) {
+  chSat = satAdd(chSat, delta);
+  if (chSat <= 0 && running) chOut = true;      // 0%가 되면 3분 전이라도 장사를 마친다
+}
 let customer = null;           // { def, need, wait, max, phase, t }
 let nextCustomerIn = 0;
 let toastUntil = 0;
@@ -605,7 +642,7 @@ function spawnCustomer() {
   const need = cfg.need(p);
   const max = cfg.patience(p);
   const order = makeOrderFor(need);
-  const c = { def, need, order, left: { ...order }, wait: max, max, phase: 'in', t: 0, mood: 'normal', ready: false };
+  const c = { def, need, order, left: { ...order }, wait: max, max, phase: 'in', t: 0, mood: 'normal', ready: false, perfect: true };
   customer = c;
   setCustomerImg(def.id, () => { c.ready = true; });   // 그림이 준비될 때까지는 숨겨 둔다
   c.lineHtml = pickLine(def).replace('{n}', `<span class="n">${orderPhrase(order, cfg.cream)}</span>`);
@@ -633,6 +670,7 @@ function onBag(kind = 'bean') {
   if (!want) {
     if (c.order[kind]) return hint('그건 이미 다 드렸어요');
     play('sad', 0.6);
+    chChange(SAT.wrong);
     setBubble('<span style="color:#c0392b">그건 안 시켰어요!</span>');
     c.restoreAt = elapsed + 1.1;
     return;
@@ -640,12 +678,15 @@ function onBag(kind = 'bean') {
   // 스토리 모드와 같이 봉투를 한 번 누를 때마다 한 개씩 건넨다
   const bag = kind === 'cream' ? creamPerfect : bagPerfect;
   if (!bag.length) return hint(`${cfg.cream ? (kind === 'cream' ? '슈크림 ' : '팥 ') : ''}봉투가 비었어요`);
-  bag.shift();
+  if (!bag.shift()) c.perfect = false;
   if (kind === 'bean') bagCount = bagPerfect.length;
   c.left[kind]--;
   if (c.left.bean || c.left.cream) { play('collect', 0.5); return; }   // 아직 남았다
   const ratio = c.wait / c.max;
-  const tip = ratio > 0.6 ? 200 * c.need : 0;
+  const tip = ratio > 0.6 ? cfg.tipEach(progress()) * c.need : 0;
+  chCombo++;
+  chChange(satServeDelta(ratio, chCombo, c.perfect));
+  if (chCombo % SAT.comboEvery === 0) setTimeout(() => toast(`🔥 ${chCombo}콤보! 만족도 보너스`), 650);
   const sales = c.order.bean * cfg.price + c.order.cream * (cfg.price + 200);
   const earned = sales + tip;
   money += earned;
@@ -686,6 +727,9 @@ function startDay(startMoney = 0) {
   Object.keys(stats).forEach((k) => { stats[k] = 0; });
   molds.forEach((m, i) => { setMold(m, 'empty'); m.flipAt = -1; m.kind = 'bean'; m.locked = !cfg.molds.includes(i); });
   customer = null;
+  chSat = SAT.start; chCombo = 0; chOut = false; chStageNow = 0;
+  setBgmRate(1);
+  $('stage-banner').classList.remove('show');
   nextCustomerIn = cfg.firstGap;
   toastUntil = 0;
   selectTool('batter');
@@ -699,7 +743,7 @@ function saveChallengeRank() {
   if (!pendingRank) return;
   const name = ($('r-name').value || '').trim().slice(0, 8) || '이름 없음';
   Ranks.rememberName(name);
-  const entry = { name, money: pendingRank.money, sold: pendingRank.sold, date: new Date().toISOString().slice(0, 10) };
+  const entry = { name, money: pendingRank.money, net: pendingRank.net, sat: pendingRank.sat, sold: pendingRank.sold, date: new Date().toISOString().slice(0, 10) };
   const at = Ranks.add(pendingRank.board, entry);   // 내 기기 10위 밖이면 -1
   const board = pendingRank.board;
   pendingRank = null;
@@ -714,6 +758,7 @@ function leftoverText() {
 
 function endDay() {
   running = false;
+  setBgmRate(1);
   play('start');
   playBgm(null);
   if (mode === 'story') {
@@ -729,10 +774,12 @@ function endDay() {
   loadBgm(nextGameTrack);   // 보통은 이미 받아 뒀다
   const net = money;
   const board = cfg.variant || 'bean';
-  const place = net > 0 ? Ranks.place(board, net) : -1;
+  const sat = Math.round(chSat), mult = satMultiplier(sat);
+  const score = net > 0 ? Math.round(net * mult) : net;     // 랭킹은 이 점수로 매긴다
+  const place = score > 0 ? Ranks.place(board, score) : -1;
   // 전체(온라인) 10위 안이면 내 기기 10위 밖이어도 올릴 수 있다 (목록을 아직 못 받았으면 일단 올릴 수 있게)
-  const online = net > 0 ? Online.qualifies(board, net) : false;
-  pendingRank = place >= 0 || online !== false ? { board, money: net, sold: stats.sold } : null;
+  const online = score > 0 ? Online.qualifies(board, score) : false;
+  pendingRank = place >= 0 || online !== false ? { board, money: score, net, sat, sold: stats.sold } : null;
   $('r-title').textContent = `3분 챌린지 ${board === 'mix' ? '팥 & 슈크림' : '팥'} 정산`;
   $('r-sold').textContent = `${stats.sold}개`;
   $('r-sales').textContent = `+${stats.sales.toLocaleString()}원`;
@@ -740,16 +787,18 @@ function endDay() {
   $('r-cost').textContent = `-${stats.cost.toLocaleString()}원`;
   $('r-miss').textContent = `${stats.burnt}개 · ${stats.missed}명`;
   $('r-total').textContent = `${net.toLocaleString()}원`;
+  $('r-sat').textContent = `${sat}% (×${mult.toFixed(2)})`;
+  $('r-score').textContent = `${score.toLocaleString()}점`;
   const top = Ranks.read(board)[0];
   const onTop = (Online.cached(board) || [])[0];
-  $('r-best').textContent = onTop && net > onTop.money ? '🌏 전체 1위 기록이에요!'
+  $('r-best').textContent = onTop && score > onTop.money ? '🌏 전체 1위 기록이에요!'
     : online === true ? '🌏 전체 랭킹에 오를 수 있어요!'
     : place === 0 ? '🎉 내 최고 기록이에요!' : place > 0 ? `🏅 내 기기 랭킹 ${place + 1}위에 오를 수 있어요!`
-    : onTop ? `전체 1위 기록 ${onTop.money.toLocaleString()}원` : top ? `1위 기록 ${top.money.toLocaleString()}원` : '';
+    : onTop ? `전체 1위 기록 ${onTop.money.toLocaleString()}점` : top ? `1위 기록 ${top.money.toLocaleString()}점` : '';
   $('r-rank').classList.toggle('hidden', !pendingRank);
   $('r-name').value = Ranks.lastName();
   $('r-save').disabled = false;
-  $('r-leftover').textContent = leftoverText();
+  $('r-leftover').textContent = (chOut ? '😟 손님 만족도가 0%가 되어 장사를 일찍 마쳤어요. ' : '') + leftoverText();
   $('result').classList.remove('hidden');
 }
 
@@ -780,7 +829,7 @@ function resumeGame() {
 
 function showChallengeMenu() {
   hideScreens();
-  const best = (b) => { const t = Ranks.read(b)[0]; return t ? `1위 ${t.money.toLocaleString()}원` : '아직 기록 없음'; };
+  const best = (b) => { const t = Ranks.read(b)[0]; return t ? `1위 ${t.money.toLocaleString()}점` : '아직 기록 없음'; };
   $('ch-bean-best').textContent = best('bean');
   $('ch-mix-best').textContent = best('mix');
   $('challenge-menu').classList.remove('hidden');
@@ -811,6 +860,7 @@ function update(dt) {
       stats.burnt++;
       play('burn', 0.6);
       if (mode === 'story') Story.onBurnt();
+      else { chCombo = 0; chChange(SAT.burn); }
     }
   });
 
@@ -828,6 +878,7 @@ function update(dt) {
         stats.missed++;
         play('sad', 0.7);
         if (mode === 'story') Story.onMissed();
+        else { chCombo = 0; chChange(SAT.leave); }
         setBubble('<span style="color:#7a6a5a">너무 오래 기다려서 그냥 갈게요...</span>');
         customerLeaves(false);
       }
@@ -839,7 +890,24 @@ function update(dt) {
     if (nextCustomerIn <= 0) spawnCustomer();
   }
 
-  if (running && elapsed >= cfg.dayLength) endDay();
+  if (cfg.stages && running) {
+    const st = chStageIndex(progress());
+    if (st !== chStageNow) { chStageNow = st; stageBanner(CH_STAGES[st].msg); setBgmRate(CH_STAGES[st].bgm); }
+  }
+  if (running && (elapsed >= cfg.dayLength || chOut)) endDay();
+}
+
+// 3분 챌린지 단계가 바뀔 때 크게 알린다
+function stageBanner(text) {
+  const el = $('stage-banner');
+  el.textContent = text;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  play('bell', 0.6);
+  setTimeout(() => play('bell', 0.6), 180);
+}
+// 단계가 오를수록 장사 음악을 조금씩 빠르게 (음 높이는 그대로)
+function setBgmRate(rate) {
+  for (const k in bgm) { try { bgm[k].preservesPitch = true; bgm[k].playbackRate = rate; } catch { /* 무시 */ } }
 }
 
 function render() {
@@ -858,6 +926,7 @@ function render() {
   $('money-text').textContent = money.toLocaleString();
   $('sold-text').textContent = stats.sold;
   if (mode === 'story') Story.renderHud();
+  else drawSat(chSat);
 
   // 철판
   const cook = cfg.cook(p), burn = cfg.burn(p);

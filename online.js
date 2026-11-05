@@ -11,11 +11,12 @@ const Online = (() => {
   const PROJECT = 'cnation-project';
   const DOCS = `projects/${PROJECT}/databases/(default)/documents`;
   const BASE = `https://firestore.googleapis.com/v1/${DOCS}`;
-  const COL = { story: 'cnation-bb-rank-story', bean: 'cnation-bb-rank-bean', mix: 'cnation-bb-rank-mix' };
+  // 3분 챌린지는 v1.6.0부터 점수제라 새 컬렉션(-v2)으로 새로 시작한다
+  const COL = { story: 'cnation-bb-rank-story', bean: 'cnation-bb-rank-bean-v2', mix: 'cnation-bb-rank-mix-v2' };
   const TIMEOUT = 8000;
 
   // board → 상위 10건 (마지막으로 받은 것). 기기에도 남겨 두어, 인터넷이 안 될 때 보여 준다
-  const STORE_KEY = 'cnation-bb-online-cache-v1';
+  const STORE_KEY = 'cnation-bb-online-cache-v2';
   const cache = {}, savedAt = {};
   try {
     const s = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
@@ -68,7 +69,7 @@ const Online = (() => {
     if (typeof o.name !== 'string' || !Number.isFinite(o.money)) return null;
     return {
       id: doc.name.split('/').pop(), name: o.name.slice(0, 8), money: o.money,
-      sold: Number.isFinite(o.sold) ? o.sold : 0, sat: Number.isFinite(o.sat) ? o.sat : undefined,
+      sold: Number.isFinite(o.sold) ? o.sold : 0, net: Number.isFinite(o.net) ? o.net : undefined, sat: Number.isFinite(o.sat) ? o.sat : undefined,
       ending: typeof o.ending === 'string' ? o.ending.slice(0, 20) : '', retry: o.retry === true,
       date: typeof o.date === 'string' ? o.date.slice(0, 10) : '',
     };
@@ -90,7 +91,7 @@ const Online = (() => {
   async function add(board, entry) {
     const id = Array.from(crypto.getRandomValues(new Uint8Array(10)), (b) => b.toString(16).padStart(2, '0')).join('');
     const fields = {};
-    for (const k of ['name', 'money', 'sold', 'sat', 'ending', 'retry', 'date']) {
+    for (const k of ['name', 'money', 'net', 'sold', 'sat', 'ending', 'retry', 'date']) {
       if (entry[k] !== undefined && entry[k] !== null) fields[k] = enc(entry[k]);
     }
     await call(`${BASE}:commit`, { writes: [{
