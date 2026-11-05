@@ -703,10 +703,10 @@ function saveChallengeRank() {
   const name = ($('r-name').value || '').trim().slice(0, 8) || '이름 없음';
   Ranks.rememberName(name);
   const entry = { name, money: pendingRank.money, sold: pendingRank.sold, date: new Date().toISOString().slice(0, 10) };
-  const at = Ranks.add(pendingRank.board, entry);
+  const at = Ranks.add(pendingRank.board, entry);   // 내 기기 10위 밖이면 -1
   const board = pendingRank.board;
   pendingRank = null;
-  Story.showRanking(board, at);
+  Story.submitRank(board, entry, at);
 }
 
 // 장사가 끝났을 때 팔지 못한 붕어빵 (봉투 속 + 철판 위 다 익은 것). 보상은 없고 안내만 한다
@@ -733,7 +733,9 @@ function endDay() {
   const net = money;
   const board = cfg.variant || 'bean';
   const place = net > 0 ? Ranks.place(board, net) : -1;
-  pendingRank = place >= 0 ? { board, money: net, sold: stats.sold } : null;
+  // 전체(온라인) 10위 안이면 내 기기 10위 밖이어도 올릴 수 있다 (목록을 아직 못 받았으면 일단 올릴 수 있게)
+  const online = net > 0 ? Online.qualifies(board, net) : false;
+  pendingRank = place >= 0 || online !== false ? { board, money: net, sold: stats.sold } : null;
   $('r-title').textContent = `3분 챌린지 ${board === 'mix' ? '팥 & 슈크림' : '팥'} 정산`;
   $('r-sold').textContent = `${stats.sold}개`;
   $('r-sales').textContent = `+${stats.sales.toLocaleString()}원`;
@@ -742,7 +744,11 @@ function endDay() {
   $('r-miss').textContent = `${stats.burnt}개 · ${stats.missed}명`;
   $('r-total').textContent = `${net.toLocaleString()}원`;
   const top = Ranks.read(board)[0];
-  $('r-best').textContent = place === 0 ? '🎉 최고 기록이에요!' : place > 0 ? `🏅 랭킹 ${place + 1}위에 오를 수 있어요!` : top ? `1위 기록 ${top.money.toLocaleString()}원` : '';
+  const onTop = (Online.cached(board) || [])[0];
+  $('r-best').textContent = onTop && net > onTop.money ? '🌏 전체 1위 기록이에요!'
+    : online === true ? '🌏 전체 랭킹에 오를 수 있어요!'
+    : place === 0 ? '🎉 내 최고 기록이에요!' : place > 0 ? `🏅 내 기기 랭킹 ${place + 1}위에 오를 수 있어요!`
+    : onTop ? `전체 1위 기록 ${onTop.money.toLocaleString()}원` : top ? `1위 기록 ${top.money.toLocaleString()}원` : '';
   $('r-rank').classList.toggle('hidden', !pendingRank);
   $('r-name').value = Ranks.lastName();
   $('r-save').disabled = false;
@@ -1006,6 +1012,7 @@ function startLoading() {
   const timeout = new Promise((ok) => setTimeout(ok, 15000));
   Promise.race([Promise.all(tasks.map((t) => t.catch(() => {}))), timeout]).then(() => {
     loadingDone = true;
+    Online.preload();   // 전체 랭킹은 로딩이 끝난 뒤 뒤에서 받아 둔다
     $('loading').classList.add('ready');
     $('loading-text').textContent = '화면을 터치하면 시작해요';
     GAME_TRACKS.forEach(loadBgm);   // 나머지 장사 음악은 뒤에서 받아 둔다
