@@ -3,8 +3,8 @@
 // ───────────────────────── 온라인 랭킹 (Firebase Firestore) ─────────────────────────
 // cnation-jgame과 같은 Firebase 프로젝트(cnation-project)를 쓴다.
 // SDK(수백 KB)를 받지 않고 Firestore REST API를 바로 부른다: 첫 로딩이 가볍다.
-// 기록은 한 건씩 따로 저장한다(문서 하나에 배열로 덮어쓰지 않음). 보안 규칙이
-// "새로 추가만 가능, 수정·삭제 불가, 값 범위 검사"를 맡는다: docs/firestore.rules
+// 기록은 한 건씩 따로 저장한다(문서 하나에 배열로 덮어쓰지 않음): 동시에 올려도 서로 덮지 않는다.
+// 프로젝트 규칙은 기존 그대로(모든 컬렉션 열림) 쓴다. 더 막을 때 쓸 규칙: docs/firestore.rules
 // apiKey는 공개돼도 되는 값이다(접근 제어는 보안 규칙이 한다).
 const Online = (() => {
   const API_KEY = 'AIzaSyCTwOAC_LrrKH8CKepUOTf0pyd9qRv4y_8';

@@ -1,4 +1,8 @@
-// cnation 붕어빵 타이쿤 — 온라인 랭킹 Firestore 보안 규칙
+// cnation 붕어빵 타이쿤 — 온라인 랭킹 Firestore 보안 규칙 (선택 사항, 지금은 적용하지 않음)
+//
+// 현재 cnation-project는 `match /{document=**} { allow read, write: if true; }` 로 모든 컬렉션이
+// 열려 있어서, 붕어빵 컬렉션(cnation-bb-rank-*)도 규칙 수정 없이 동작한다(2026-11-05 확인).
+// 그 한 줄이 남아 있는 동안에는 아래 블록을 넣어도 효과가 없다. 나중에 그 줄을 정리할 때 함께 쓴다.
 //
 // Firebase 콘솔 → cnation-project → Firestore Database → 규칙(Rules)에서
 // 기존 규칙의 `match /databases/{database}/documents { ... }` 안쪽에
