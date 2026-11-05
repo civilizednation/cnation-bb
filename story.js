@@ -620,7 +620,7 @@ const Story = (() => {
 
   // ───────────────────────── 특별 손님 (3단계: 사람 손님 7명) ─────────────────────────
   // 사람 손님은 저마다 규칙이 있다. 동네 사람이라 Day 1부터 모두 온다(매일 첫 두 손님은 동물).
-  // 하루에 한 명(Day 9부터 두 명)까지, 같은 손님은 하루 한 번. 현이는 스토리마다 한 번.
+  // 하루에 한 명(Day 9부터 두 명)까지, 같은 손님은 하루 한 번.
   // 게임 속도를 위해 선택 버튼은 없다: "싸게 달라는" 손님(꼬마·윤이 엄마)은 그냥 싸게 판다.
   const SPECIALS = {
     courier: { name: '택배기사', from: 1, need: [1, 2], patience: 0.4, tipEach: 600,
@@ -644,8 +644,8 @@ const Story = (() => {
     yuni: { name: '윤이', from: 1, need: [4, 6], 
       lines: ['배고파요… 급식 먹었는데 또 배고파요. {n}요.', '엄마가 여기 제일 맛있대요. {n} 주세요.', '학원 가기 전에 {n} 먹을게요.', '친구들 것까지 {n}요. 감사합니다!', '{n} 주세요. 엄마한테 자랑할 거예요.'],
       thanks: '엄마가 사장님 칭찬 엄청 했어요!' },
-    // 현이: 윤이 형, 윤이 엄마의 첫째 아들. 군 복무 중 휴가를 나와서 한 번만 온다
-    hyun: { name: '휴가 나온 현이', from: 1, need: [5, 8], once: true, patience: 0.8, tipEach: 400, satBonus: 5,
+    // 현이: 윤이 형, 윤이 엄마의 첫째 아들. 서울 수방사에서 근무해서 휴가를 자주 나온다 (다른 동네 사람과 같은 규칙)
+    hyun: { name: '휴가 나온 현이', from: 1, need: [5, 8], patience: 0.8, tipEach: 400, satBonus: 5,
       lines: ['휴가 나왔습니다! {n} 부탁드립니다!', '부대에서 제일 생각났던 게 이거예요. {n}요!', '윤이 형입니다. 엄마가 꼭 들르래요. {n}요!', '복귀 전에 동기들 줄 {n} 포장이요!', '휴가가 짧아서요… {n} 빨리 부탁드립니다!'],
       thanks: '충성! 복귀해서도 이 맛 생각날 거예요!' },
   };
@@ -662,7 +662,6 @@ const Story = (() => {
     const ok = Object.keys(SPECIALS).filter((id) => {
       const sp = SPECIALS[id];
       if (seen.has(id) || day < sp.from) return false;
-      if (sp.once && save[id + 'Met']) return false;      // 현이는 휴가 때 한 번만
       return true;
     });
     if (!ok.length || Math.random() > 1 / 6) return null;
