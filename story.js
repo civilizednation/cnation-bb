@@ -7,25 +7,25 @@
 
 const Story = (() => {
   // ── 날짜별 난이도 (기획안 2장, 초기값) ──
-  // len: 장사 시간(초), arrive: 손님 간격(초, 2단계 줄 서기 기준), patience: 인내심(초), need: 주문 개수 [최소, 최대]
+  // len: 장사 시간(초, 처음 기획값에서 20% 늘림), arrive: 손님 간격(초, 2단계 줄 서기 기준), patience: 인내심(초), need: 주문 개수 [최소, 최대]
   // 1단계는 손님이 한 명씩 오므로, "손님이 떠나고 다음 손님이 오기까지"를 손님 간격의 35%로 쓴다.
   const DAYS = [
     null,
-    { len: 45, arrive: [7, 9], patience: 38, need: [1, 2] },
-    { len: 50, arrive: [6, 8], patience: 36, need: [1, 2] },
-    { len: 55, arrive: [6, 7], patience: 34, need: [1, 3] },
-    { len: 55, arrive: [5, 7], patience: 33, need: [1, 3] },
-    { len: 60, arrive: [5, 6], patience: 32, need: [1, 3] },
-    { len: 60, arrive: [5, 6], patience: 31, need: [1, 3] },
-    { len: 65, arrive: [4.5, 5.5], patience: 30, need: [1, 3] },
-    { len: 65, arrive: [4.5, 5.5], patience: 29, need: [1, 4] },
-    { len: 70, arrive: [4, 5], patience: 28, need: [1, 4] },
-    { len: 70, arrive: [4, 5], patience: 27, need: [2, 4] },
-    { len: 70, arrive: [4, 4.5], patience: 26, need: [2, 4] },
-    { len: 75, arrive: [3.5, 4.5], patience: 25, need: [2, 4] },
-    { len: 75, arrive: [3.5, 4], patience: 24, need: [2, 5] },
-    { len: 75, arrive: [3, 4], patience: 23, need: [2, 5] },
-    { len: 80, arrive: [3, 3.5], patience: 22, need: [2, 5] },
+    { len: 54, arrive: [7, 9], patience: 38, need: [1, 2] },
+    { len: 60, arrive: [6, 8], patience: 36, need: [1, 2] },
+    { len: 66, arrive: [6, 7], patience: 34, need: [1, 3] },
+    { len: 66, arrive: [5, 7], patience: 33, need: [1, 3] },
+    { len: 72, arrive: [5, 6], patience: 32, need: [1, 3] },
+    { len: 72, arrive: [5, 6], patience: 31, need: [1, 3] },
+    { len: 78, arrive: [4.5, 5.5], patience: 30, need: [1, 3] },
+    { len: 78, arrive: [4.5, 5.5], patience: 29, need: [1, 4] },
+    { len: 84, arrive: [4, 5], patience: 28, need: [1, 4] },
+    { len: 84, arrive: [4, 5], patience: 27, need: [2, 4] },
+    { len: 84, arrive: [4, 4.5], patience: 26, need: [2, 4] },
+    { len: 90, arrive: [3.5, 4.5], patience: 25, need: [2, 4] },
+    { len: 90, arrive: [3.5, 4], patience: 24, need: [2, 5] },
+    { len: 90, arrive: [3, 4], patience: 23, need: [2, 5] },
+    { len: 96, arrive: [3, 3.5], patience: 22, need: [2, 5] },
   ];
   const LAST_DAY = 15;
   const GAP_RATIO = 0.2;
