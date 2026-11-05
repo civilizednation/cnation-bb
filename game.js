@@ -669,6 +669,8 @@ function startLoading() {
     $('loading').classList.add('ready');
     $('loading-text').textContent = '화면을 터치하면 시작해요';
     GAME_TRACKS.forEach(loadBgm);   // 나머지 장사 음악은 뒤에서 받아 둔다
+    // 굽는 법·업데이트 기록의 긴 글 폰트도 뒤에서 받아 둔다 (열기 전에 받아져 있게)
+    if (document.fonts) document.fonts.load('400 13px "IBM Plex Sans KR"', '붕어빵').catch(() => {});
   });
 }
 $('loading').addEventListener('click', () => {

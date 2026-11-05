@@ -13,7 +13,7 @@ for w in Regular Bold; do
   curl -sS -o fonts/Dongle-$w.woff2 \
     "https://raw.githubusercontent.com/civilizednation/cnation-bb/main/fonts/Dongle-$w.woff2"
 done
-curl -sS -o fonts/OFL.txt "https://raw.githubusercontent.com/civilizednation/cnation-bb/main/fonts/OFL.txt"
+curl -sS -o fonts/OFL-Dongle.txt "https://raw.githubusercontent.com/civilizednation/cnation-bb/main/fonts/OFL-Dongle.txt"
 ```
 
 | 파일명 | 굵기 | 용량 |
@@ -29,7 +29,7 @@ curl -sS -o fonts/OFL.txt "https://raw.githubusercontent.com/civilizednation/cna
 |---|---|
 | 폰트명 | Dongle |
 | 배포처 | Google Fonts |
-| 라이선스 | SIL Open Font License 1.1 (OFL) — 상업적 사용·수정·재배포 가능. `fonts/OFL.txt`를 함께 둡니다 |
+| 라이선스 | SIL Open Font License 1.1 (OFL) — 상업적 사용·수정·재배포 가능. `fonts/OFL-Dongle.txt`를 함께 둡니다 |
 | 원저작자 | The Dongle Project Authors (yangheeryu/Dongle) |
 | 원본 | `https://github.com/google/fonts` 저장소의 `ofl/dongle/` 폴더 (굵기당 약 4.4MB) |
 
@@ -87,6 +87,26 @@ h1, h2, h3, button, .btn { font-weight: 700; }
 
 ```js
 await Promise.all([400, 700].map((w) => document.fonts.load(`${w} 16px Dongle`, '붕어빵')));
+```
+
+## 3-1. 긴 글은 IBM Plex Sans KR 400과 함께 쓰기
+
+Dongle은 짧은 글에는 귀엽지만, 굽는 법이나 업데이트 기록처럼 긴 글은 읽기 힘듭니다. 그래서 긴 글에만 cnation 폰트 조합 #1의 **IBM Plex Sans KR Regular(400)**를 씁니다.
+
+- 파일: `fonts/IBMPlexSansKR-Regular.woff2` (같은 글자 범위로 서브셋, 2.8MB → 517KB), 라이선스 `fonts/OFL-IBMPlexSansKR.txt`
+- Plex는 보정 없이 그대로 씁니다. 크기는 **13.5px**, 줄 높이 1.55~1.6, 글자 간격 -0.2px입니다. 360×640 화면 기준으로 13px는 빽빽하고, 14px부터 3줄로 넘어가는 항목이 생깁니다.
+- 굵기는 400 하나만 받으므로, 긴 글 안의 강조(`<b>`)는 굵기 대신 색으로 표시합니다.
+- 로딩 화면이 끝난 뒤 뒤에서 받습니다. 긴 글은 메뉴를 눌러야 열리므로, 처음 로딩 시간을 늘리지 않습니다.
+
+```css
+@font-face {
+  font-family: 'IBM Plex Sans KR';
+  src: url('fonts/IBMPlexSansKR-Regular.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+:root { --font-text: 'IBM Plex Sans KR', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+.long-text { font-family: var(--font-text); font-size: 13.5px; font-weight: 400; line-height: 1.55; letter-spacing: -0.2px; }
+.long-text b { font-weight: 400; color: #c8560f; }
 ```
 
 ## 4. 서브셋 직접 만들기 (문자 범위를 바꿀 때만)

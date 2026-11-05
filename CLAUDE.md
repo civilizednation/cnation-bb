@@ -24,5 +24,5 @@
 
 - 그림은 `assets/sprites/`에 WebP(품질 90)로 둡니다. `icon.png`만 180×180 PNG입니다. 그림 작업 규격은 `docs/codex-asset-brief.md`를 따릅니다.
 - 배경음악은 `assets/sounds/`에 webm(Opus)과 대체용 mp3를 같은 이름으로 함께 둡니다.
-- 폰트는 `fonts/`의 Dongle(서브셋 woff2) 하나만 씁니다. 굵기는 본문 400, 제목·버튼·숫자·강조 700 두 가지뿐이고, 800·900은 쓰지 않습니다. 크기와 줄 높이 보정값의 이유와 계산식은 `docs/cnation-font-dongle.md`에 있습니다.
+- 폰트는 `fonts/`의 서브셋 woff2 두 종류입니다. 기본은 Dongle이고, 굵기는 본문 400, 제목·버튼·숫자·강조 700 두 가지뿐입니다(800·900은 쓰지 않음). 굽는 법·업데이트 기록처럼 긴 글에만 IBM Plex Sans KR 400(`var(--font-text)`, 13.5px)을 쓰고, 긴 글 안의 강조는 색으로 표시합니다. 크기와 줄 높이 보정값의 이유와 계산식은 `docs/cnation-font-dongle.md`에 있습니다.
 - 손님 목록은 `game.js`의 `CUSTOMERS` 배열입니다. 대사는 말풍선에 2줄 안에 들어가게 쓰는 게 기본입니다. 더 긴 대사는 말풍선이 세로로 커져서 4줄까지 들어갑니다(`setBubble`). 말풍선이 커지면 손님 얼굴과 가게 화면을 더 가리니, 꼭 필요한 대사만 길게 씁니다.

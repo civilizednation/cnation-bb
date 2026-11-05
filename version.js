@@ -4,6 +4,13 @@
 // 새 버전은 배열 맨 앞에 추가한다. 번호 올리는 규칙은 CLAUDE.md 참고.
 const CHANGELOG = [
   {
+    version: '1.0.6',
+    date: '2026-11-05',
+    notes: [
+      '굽는 법과 업데이트 기록을 읽기 쉬운 글꼴(IBM Plex Sans KR)로 변경',
+    ],
+  },
+  {
     version: '1.0.5',
     date: '2026-11-05',
     notes: [
