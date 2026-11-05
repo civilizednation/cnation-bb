@@ -397,7 +397,7 @@ img { -webkit-user-drag: none; }
   text-shadow: 0 5px 0 #5b2e10;
 }
 /* 게임 이름 "cnation 붕어빵 타이쿤": 두 줄, 위 줄 cnation은 같은 글자 꾸밈으로 작게 */
-.game-title { line-height: 1.05; }
+.game-title { line-height: 1.05; text-align: center; }
 .game-title span { display: block; }
 .game-title .title-brand {
   margin-bottom: 4px;

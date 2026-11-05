@@ -4,6 +4,13 @@
 // 새 버전은 배열 맨 앞에 추가한다. 번호 올리는 규칙은 CLAUDE.md 참고.
 const CHANGELOG = [
   {
+    version: '1.0.10',
+    date: '2026-11-05',
+    notes: [
+      '첫 로딩 화면 제목의 "cnation"을 가운데로 정렬',
+    ],
+  },
+  {
     version: '1.0.9',
     date: '2026-11-05',
     notes: [
