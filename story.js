@@ -598,6 +598,10 @@ const Story = (() => {
     yuni: { name: '윤이', from: 9, need: [4, 6], needs: 'auntie',
       lines: ['배고파요… 급식 먹었는데 또 배고파요. {n}요.', '엄마가 여기 제일 맛있대요. {n} 주세요.', '학원 가기 전에 {n} 먹을게요.', '친구들 것까지 {n}요. 감사합니다!', '{n} 주세요. 엄마한테 자랑할 거예요.'],
       thanks: '엄마가 사장님 칭찬 엄청 했어요!' },
+    // 현이: 윤이 형, 윤이 엄마의 첫째 아들. 군 복무 중 휴가를 나와서 한 번만 온다
+    hyun: { name: '휴가 나온 현이', from: 10, need: [5, 8], needs: 'yuni', once: true, patience: 0.8, tipEach: 400, satBonus: 5,
+      lines: ['휴가 나왔습니다! {n} 부탁드립니다!', '부대에서 제일 생각났던 게 이거예요. {n}요!', '윤이 형입니다. 엄마가 꼭 들르래요. {n}요!', '복귀 전에 동기들 줄 {n} 포장이요!', '휴가가 짧아서요… {n} 빨리 부탁드립니다!'],
+      thanks: '충성! 복귀해서도 이 맛 생각날 거예요!' },
   };
   let buzzUntil = 0;   // 윤이 엄마가 소문을 내면 잠깐 손님이 더 자주 온다
   let forceSpecial = null;   // 시험용 (_debug.forceSpecial)
@@ -614,6 +618,8 @@ const Story = (() => {
       if (seen.has(id) || day < sp.from) return false;
       if (id === 'grandpa' && day < 5) return false;
       if (sp.needs === 'auntie' && !save.auntieMet) return false;
+      if (sp.needs === 'yuni' && !save.yuniMet) return false;
+      if (sp.once && save[id + 'Met']) return false;      // 현이는 휴가 때 한 번만
       return true;
     });
     if (!ok.length || Math.random() > 1 / 6) return null;
@@ -766,6 +772,12 @@ const Story = (() => {
       else thanks = '허허, 다음엔 기억해 주게.';
     }
     if (e.sp === 'auntie') { save.auntieMet = true; today.auntieHappy = true; buzzUntil = elapsed + 30; }
+    if (e.sp === 'hyun') {
+      save.hyunMet = true;
+      // 엄마와 윤이가 모두 기분 좋게 다녀갔다면 가족 대표로 감사 인사
+      if (save.auntieHappy || today.auntieHappy) { extra += 2000; thanks = '엄마랑 윤이가 여기 얘기만 해요! 가족 대표로 감사 인사예요. 충성!'; }
+    }
+    if (e.sp === 'yuni') save.yuniMet = true;
     if (e.sp === 'yuni') { if (today.auntieHappy || save.auntieHappy) tip = Math.round(Math.max(tip, 200 * cnt) * 1.5 / 10) * 10; else thanks = '감사합니다!'; }
     if (today.auntieHappy) save.auntieHappy = true;
     if (sp) { const rec = today.specials.find((x) => x.id === e.sp && x.ok === null); if (rec) rec.ok = true; }

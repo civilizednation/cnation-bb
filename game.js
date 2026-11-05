@@ -549,7 +549,7 @@ CUSTOMERS.forEach((c) => [c.id, c.id + '-sad'].forEach((name) => {
   customerImgCache[name] = im;
 }));
 // 스토리 모드 특별 손님(사람) 그림도 미리 받아 둔다
-['courier', 'principal', 'grandpa', 'girl', 'boy', 'auntie', 'yuni'].forEach((id) => [id, id + '-sad'].forEach((name) => {
+['courier', 'principal', 'grandpa', 'girl', 'boy', 'auntie', 'yuni', 'hyun'].forEach((id) => [id, id + '-sad'].forEach((name) => {
   const im = new Image();
   im.src = SPRITE + name + '.webp';
   customerImgCache[name] = im;
