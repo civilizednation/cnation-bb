@@ -159,7 +159,8 @@ function playBgm(which, restart = false) {
 function setSound(on) {
   soundOn = on;
   localStorage.setItem('bb-sound', on ? 'on' : 'off');
-  document.getElementById('sound-btn').textContent = on ? '🔊' : '🔇';
+  // 장사 화면과 타이틀 화면의 소리 버튼을 함께 바꾼다
+  document.querySelectorAll('.sound-toggle').forEach((b) => { b.textContent = on ? '🔊' : '🔇'; });
   if (on) playBgm(currentBgm); else for (const k in bgm) bgm[k].pause();
 }
 
@@ -199,7 +200,7 @@ tools.forEach((btn) => btn.addEventListener('pointerdown', (e) => {
   selectTool(btn.dataset.tool);
 }));
 $('bag').addEventListener('pointerdown', (e) => { e.preventDefault(); onBag(); });
-$('sound-btn').addEventListener('click', () => setSound(!soundOn));
+document.querySelectorAll('.sound-toggle').forEach((b) => b.addEventListener('click', () => setSound(!soundOn)));
 $('pause-btn').addEventListener('click', () => pauseGame());
 $('resume-btn').addEventListener('click', () => resumeGame());
 $('restart-btn').addEventListener('click', () => { closePause(); startDay(); });
