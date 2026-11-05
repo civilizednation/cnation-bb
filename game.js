@@ -21,6 +21,10 @@ const CHALLENGE = {
   firstGap: 1.2,
 };
 
+// 반죽을 부으면 0.5초 동안 퍼지는 장면 (무늬 없는 반죽 → 팥을 올려도 무늬 없음 → 뒤집으면 무늬가 보인다)
+const POUR_FRAMES = ['pour1.webp', 'pour2.webp', 'pour3.webp', 'pour4.webp', 'batter.webp'];
+const POUR_TIME = 0.5;
+
 const BREAD_IMG = {
   empty: 'mold.webp',
   batter: 'batter.webp',
@@ -281,7 +285,13 @@ function onMold(i) {
       play('pour');
       stats.cost += BATTER_COST;
       money -= BATTER_COST;
-      setMold(m, 'batter');
+      setMold(m, 'pouring');
+      break;
+    case 'pouring':
+      // 퍼지는 중에 팥을 누르면 기다리지 않고 바로 팥을 올린다
+      if (tool !== 'bean') return hint('반죽을 붓는 중이에요');
+      play('bean');
+      setMold(m, 'bean');
       break;
     case 'batter':
       if (tool !== 'bean') return hint('팥을 올려요');
@@ -538,7 +548,8 @@ function update(dt) {
   molds.forEach((m) => {
     if (m.locked) return;
     m.t += dt;
-    if (m.state === 'side1' && m.t >= cook) setMold(m, 'flip');
+    if (m.state === 'pouring' && m.t >= POUR_TIME) setMold(m, 'batter');
+    else if (m.state === 'side1' && m.t >= cook) setMold(m, 'flip');
     else if (m.state === 'side2' && m.t >= cook) setMold(m, 'done');
     else if ((m.state === 'flip' || m.state === 'done') && m.t >= burn) {
       setMold(m, 'burnt');
@@ -594,7 +605,9 @@ function render() {
   const cook = cfg.cook(p), burn = cfg.burn(p);
   molds.forEach((m) => {
     m.el.classList.toggle('locked', !!m.locked);
-    const src = SPRITE + BREAD_IMG[m.locked ? 'empty' : m.state];
+    const src = SPRITE + (m.state === 'pouring' && !m.locked
+      ? POUR_FRAMES[Math.min(POUR_FRAMES.length - 1, Math.floor(m.t / (POUR_TIME / POUR_FRAMES.length)))]
+      : BREAD_IMG[m.locked ? 'empty' : m.state]);
     if (m.shown !== src) { m.img.src = src; m.shown = src; }
     const f = (elapsed - m.flipAt) / 0.22;
     m.img.style.transform = f >= 0 && f < 1 ? `scaleY(${Math.abs(Math.cos(f * Math.PI))})` : '';
@@ -678,7 +691,7 @@ document.addEventListener('visibilitychange', () => {
 const PRELOAD_SPRITES = [
   'start-scene', 'bg-morning', 'bg-sunset', 'bg-night', 'curtain', 'textbox', 'button',
   'timer-pill', 'money-pill', 'bread-pill', 'clock',
-  'mold', 'batter', 'batter-bean', 'fresh', 'soso', 'good', 'burnt',
+  'mold', 'pour1', 'pour2', 'pour3', 'pour4', 'batter', 'batter-bean', 'fresh', 'soso', 'good', 'burnt',
   'bag0', 'bag1', 'bag2', 'bag3', 'kettle', 'kettle-on', 'bean', 'bean-on', 'stick', 'stick-on',
 ];
 function loadImage(im) {
