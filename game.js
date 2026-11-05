@@ -86,7 +86,7 @@ const satMultiplier = (sat) => 0.5 + Math.round(sat) / 100;
 
 // ───────────────────────── 랭킹 (기기 안 상위 10개) ─────────────────────────
 // story: 스토리 모드(엔딩 때 가진 돈) · bean: 3분 챌린지 팥 · mix: 3분 챌린지 팥 & 슈크림
-// 3분 챌린지는 v1.6.0부터 점수(순이익 × 만족도 배수)로 매겨서 v2로 새로 시작한다 (v1 기록은 기기에 그대로 남아 있음)
+// 3분 챌린지는 v1.5.3부터 점수(순이익 × 만족도 배수)로 매겨서 v2로 새로 시작한다 (v1 기록은 기기에 그대로 남아 있음)
 const RANK_KEYS = { story: 'cnation-bb-story-rank-v1', bean: 'cnation-bb-rank-bean-v2', mix: 'cnation-bb-rank-mix-v2' };
 const RANK_NAMES = { story: '스토리 모드', bean: '3분 챌린지 팥', mix: '3분 챌린지 팥 & 슈크림' };
 const Ranks = {

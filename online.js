@@ -11,7 +11,7 @@ const Online = (() => {
   const PROJECT = 'cnation-project';
   const DOCS = `projects/${PROJECT}/databases/(default)/documents`;
   const BASE = `https://firestore.googleapis.com/v1/${DOCS}`;
-  // 3분 챌린지는 v1.6.0부터 점수제라 새 컬렉션(-v2)으로 새로 시작한다
+  // 3분 챌린지는 v1.5.3부터 점수제라 새 컬렉션(-v2)으로 새로 시작한다
   const COL = { story: 'cnation-bb-rank-story', bean: 'cnation-bb-rank-bean-v2', mix: 'cnation-bb-rank-mix-v2' };
   const TIMEOUT = 8000;
 
