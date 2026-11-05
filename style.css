@@ -206,6 +206,7 @@ img { -webkit-user-drag: none; }
 }
 #bubble-text .n { color: #e2541c; font-size: 1.2em; }
 #patience {
+  flex: none;   /* 대사가 길어도 바가 눌려 납작해지지 않게 */
   margin-top: 8px;
   height: 7px;
   border-radius: 4px;
