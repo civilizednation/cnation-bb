@@ -311,7 +311,7 @@ img { -webkit-user-drag: none; }
   align-items: stretch;
   gap: 6px;
 }
-#bag {
+#bag, #bag-cream {
   position: relative;
   width: 84px;
   display: flex;
@@ -319,8 +319,8 @@ img { -webkit-user-drag: none; }
   justify-content: center;
   touch-action: none;
 }
-#bag-img { height: 80px; transform-origin: 50% 100%; }
-#bag-count {
+#bag-img, #bag-cream-img { height: 80px; transform-origin: 50% 100%; }
+#bag-count, #bag-cream-count {
   position: absolute;
   right: -4px; top: 0;
   min-width: 26px; height: 26px;
@@ -334,8 +334,8 @@ img { -webkit-user-drag: none; }
   line-height: 26px;
   box-shadow: 0 2px 0 rgba(0, 0, 0, .2);
 }
-#bag-count small { font-size: 11px; opacity: .85; }   /* 담은 개수 / 최대 개수 */
-#bag-count.full { background: #b3261e; }
+#bag-count small, #bag-cream-count small { font-size: 11px; opacity: .85; }   /* 담은 개수 / 최대 개수 */
+#bag-count.full, #bag-cream-count.full { background: #b3261e; }
 .leftover {
   padding: 7px 10px;
   border-radius: 12px;
@@ -760,3 +760,61 @@ body.story-mode .pill.sat {
 
 /* 화면이 아닌 요소(버튼, 안내 문구)도 상황에 따라 숨긴다 */
 .hidden { display: none !important; }
+
+/* ───────────────────────── 스토리 모드 2단계: 손님 줄 서기 ───────────────────────── */
+/* 줄 서기를 쓰는 날은 손님 한 명용 그림 대신 #queue에 줄 선 손님들을 그린다 (시안 C2) */
+body.queue-mode #customer { display: none; }
+body.queue-mode #bubble { left: 190px; width: 186px; }
+#queue { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.qc { position: absolute; width: 145px; height: 145px; transform-origin: 50% 100%; }
+.qc img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; }
+.qtag {
+  position: absolute;
+  padding: 2px 7px 4px;
+  border-radius: 10px;
+  background: #fff8ea;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .25);
+  font-size: 13px; font-weight: 700; color: #5b2e10;
+  white-space: nowrap;
+}
+.qtag i { display: block; margin-top: 2px; height: 4px; border-radius: 2px; background: #eadfd2; overflow: hidden; }
+.qtag i b { display: block; width: 100%; height: 100%; transform-origin: 0 50%; background: #5dbb63; }
+.qmore {
+  position: absolute; left: 4px; top: 73px; z-index: 0;
+  padding: 1px 7px 2px; border-radius: 9px;
+  background: rgba(42, 27, 18, .75); color: #fff8ea;
+  font-size: 13px; font-weight: 700;
+}
+.qmore:empty { display: none; }
+
+/* 말풍선 아래 줄: 남은 개수 + 인내심 바 (3분 챌린지는 바만) */
+#bubble-row { flex: none; display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+#bubble-row #patience { flex: 1; margin-top: 0; }
+#order-chip { flex: none; padding: 0 7px 1px; border-radius: 8px; background: #f3e6d3; font-size: 13px; font-weight: 700; line-height: 18px; color: #5b2e10; }
+body:not(.queue-mode) #order-chip { display: none; }
+
+/* 슈크림: Day 4부터 슈크림 도구와 슈크림 봉투가 나온다 */
+body:not(.has-cream) #bag-cream, body:not(.has-cream) .tool-cream { display: none; }
+
+.bag-label { display: none; }
+body.has-cream .bag-label {
+  display: block; position: absolute; left: 0; right: 0; bottom: 0;
+  font-style: normal; font-size: 12px; font-weight: 700; color: #5b2e10; text-align: center;
+}
+body.has-cream #bench { gap: 4px; padding-left: 6px; padding-right: 6px; }
+body.has-cream #bag, body.has-cream #bag-cream { flex: 1 1 0; min-width: 0; padding-bottom: 14px; }
+body.has-cream #bag-img, body.has-cream #bag-cream-img { height: 62px; }
+body.has-cream .tool { flex: 1 1 0; min-width: 0; }
+body.has-cream .tool img { width: 44px; height: 44px; }
+body.has-cream .tool span { font-size: 12px; }
+body.has-cream #bag-count, body.has-cream #bag-cream-count { font-size: 12px; min-width: 22px; height: 22px; line-height: 22px; padding: 0 5px; right: -2px; }
+
+/* 뒤집은 틀 위 종류 표시 */
+.mold .kind {
+  position: absolute; left: 5px; top: 5px; z-index: 2;
+  padding: 0 5px 1px; border-radius: 7px;
+  font-size: 11px; font-weight: 700; color: #fff; line-height: 15px;
+}
+.mold .kind:empty { display: none; }
+.mold .kind.bean { background: #8a3b2b; }
+.mold .kind.cream { background: #d8a21d; }

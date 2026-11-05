@@ -262,6 +262,7 @@ const Story = (() => {
     customer = null;
     Object.keys(stats).forEach((k) => { stats[k] = 0; });
     const before = day > 1 ? moldsFor(day - 1) : cfg.molds;
+    if (typeof clearQueue === 'function') clearQueue();
     molds.forEach((m, i) => { setMold(m, 'empty'); m.flipAt = -1; m.locked = !before.includes(i); });
   }
   function showIntro() {
@@ -272,6 +273,9 @@ const Story = (() => {
     const extra = [];
     if (save.retryDay === day) extra.push('다시 하는 날이에요. 오늘 순이익의 50%는 재기 비용으로 반납해요.');
     if (day === 2 || day === 5) extra.push(`🔓 틀이 ${moldCount(day)}개로 늘었어요!`);
+    if (day === 4) extra.push('🍮 슈크림 메뉴 추가! 반죽 위에 슈크림을 올려 구워요. 슈크림 붕어빵은 200원 더 받아요.');
+    if (day === 8) extra.push('📝 이제 팥과 슈크림을 섞어 시키는 손님도 와요.');
+    if (DAYS[day].conc > (DAYS[day - 1]?.conc || 1)) extra.push(`👥 손님이 ${DAYS[day].conc}명까지 줄을 서요.`);
     $s('intro-extra').textContent = extra.join('\n');
     show('story-intro');
     playBgm('title');
@@ -323,6 +327,7 @@ const Story = (() => {
 
   // ── 하루 끝: 정산 → 상점 ──
   function endDay() {
+    clearQueue();
     const day = today.day;
     const net = money - today.startMoney;
     const retryCost = save.retryDay === day && net > 0 ? Math.round(net * 0.5 / 10) * 10 : 0;
@@ -341,6 +346,7 @@ const Story = (() => {
       row('가진 돈', won(money)),
       row('손님 만족도', `${Math.round(today.satStart)}% → ${Math.round(today.sat)}% (${satDiff >= 0 ? '+' : ''}${satDiff})`),
       row('빠른 제공 · 떠난 손님 · 탄 붕어빵', `${today.fast}번 · ${today.left}명 · ${today.burnt}개`),
+      today.dum || today.wrong ? row('덤으로 준 붕어빵 · 잘못 건넨 횟수', `${today.dum}개 · ${today.wrong}번`) : '',
       `<p class="leftover">${leftoverText()}</p>`,
     ].join('');
     // 아침 상태를 다음 날 것으로 바꿔서 저장한다 (정산을 끝낸 뒤에 앱을 꺼도 그날 결과가 남게)
@@ -411,6 +417,7 @@ const Story = (() => {
   // ── 게임 오버 · 다시 하기 (기획안 8장) ──
   function gameOver() {
     running = false;
+    clearQueue();
     playBgm(null);
     play('sad');
     today = null;
@@ -580,14 +587,14 @@ const Story = (() => {
     queueEl.appendChild(tag);
     const max = cfg.patience(progress());
     const i = Q.length, slot = SLOTS[Math.min(i, 2)];
-    const e = { def, order, left: { ...order }, wait: max, max, state: 'in', t: 0, el, img, tag,
+    const e = { def, order, line: pickLine(def), left: { ...order }, wait: max, max, state: 'in', t: 0, el, img, tag,
       x: -170, up: slot.up, s: slot.s, dim: slot.dim, perfect: true, dum: { bean: 0, cream: 0 }, restoreAt: 0 };
     Q.push(e);
     play('bell', 0.5);
   }
 
   function lineHtml(e) {
-    return e.def.line.replace('{n}', `<span class="n">${orderPhrase(e.order)}</span>`);
+    return e.line.replace('{n}', `<span class="n">${orderPhrase(e.order)}</span>`);
   }
   function showFrontBubble(e) {
     bubbleOwner = e;
@@ -754,8 +761,9 @@ const Story = (() => {
       setStyle(e.el, 'transform', `scale(${e.s.toFixed(3)})`);
       setStyle(e.el, 'filter', e.dim > 0.99 ? '' : `brightness(${e.dim.toFixed(2)})`);
       // 겹치는 순서: 3번째 손님 → 3번째 주문표 → 2번째 손님 → 2번째 주문표 → 맨 앞 손님
+      // (주문표는 자기 손님보다 위, 앞 손님보다 아래: 손님 6-2i, 주문표 7-2i)
       setStyle(e.el, 'zIndex', String(6 - i * 2));
-      setStyle(e.tag, 'zIndex', String(5 - i * 2));
+      setStyle(e.tag, 'zIndex', String(7 - i * 2));
     });
     leaving.forEach((e) => {
       const p = Math.min(1, e.t / 0.9);
@@ -829,7 +837,7 @@ const Story = (() => {
   on('rank-close', () => showTitle());
   on('notice-close', () => $s('story-notice').classList.add('hidden'));
   // 장사 중에 처음 화면으로 나가면 그날 장사는 저장되지 않는다 (다음에 그날 아침부터)
-  on('quit-btn', () => { if (today) { today = null; refreshTitle(); } });
+  on('quit-btn', () => { if (today) { today = null; clearQueue(); refreshTitle(); } })
 
   boot();
 
@@ -842,6 +850,6 @@ const Story = (() => {
     onServed, onMissed, onBurnt, renderHud, endDay, refreshTitle,
     serve, updateQueue, renderQueue, frontNeeds,
     // 테스트·밸런스 확인용
-    _debug: { DAYS, UPGRADES, get save() { return save; }, set save(v) { save = v; }, get today() { return today; }, persist, buildCfg, beginNew, beginDay, buy, showIntro },
+    _debug: { DAYS, UPGRADES, get Q() { return Q; }, get save() { return save; }, set save(v) { save = v; }, get today() { return today; }, persist, buildCfg, beginNew, beginDay, buy, showIntro },
   };
 })();
