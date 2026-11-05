@@ -20,7 +20,66 @@ const CHALLENGE = {
   need: (p) => 1 + Math.floor(Math.random() * (p < 0.3 ? 2 : 3)),
   gap: () => 1.6 + Math.random() * 1.2,             // 손님이 떠나고 다음 손님이 올 때까지
   firstGap: 1.2,
+  variant: 'bean',                                  // 랭킹 이름: 3분 챌린지 팥
 };
+// 3분 챌린지 팥 & 슈크림: 같은 규칙에 슈크림 도구·봉투가 더해진다. 손님은 섞어서 주문하기도 한다.
+// 속도전이라 종류별로 봉투를 한 번씩 누르면 그 종류를 한꺼번에 건넨다.
+const CHALLENGE_MIX = Object.assign({}, CHALLENGE, { variant: 'mix', cream: true, creamRatio: 0.45, mixRatio: 0.35 });
+
+// 주문 {bean, cream}을 말로: "2개" / "팥 2개" / "슈크림 1개" / "팥 2개랑 슈크림 1개"
+function orderPhrase(o, withKind) {
+  if (o.bean && o.cream) return `팥 ${o.bean}개랑 슈크림 ${o.cream}개`;
+  if (o.cream) return `슈크림 ${o.cream}개`;
+  return withKind ? `팥 ${o.bean}개` : `${o.bean}개`;
+}
+// 남은 개수 표시: "팥2 · 슈1", 다 받은 종류는 ✓ (hide: 개수를 숨기고 ?)
+function countText(o, left, hide) {
+  const parts = [];
+  if (o.bean) parts.push(`팥${hide && left.bean ? '?' : left.bean || '✓'}`);
+  if (o.cream) parts.push(`슈${hide && left.cream ? '?' : left.cream || '✓'}`);
+  return parts.join(' · ');
+}
+function makeOrderFor(n) {
+  if (!cfg.cream) return { bean: n, cream: 0 };
+  if (n >= 2 && Math.random() < cfg.mixRatio) {
+    const c = 1 + Math.floor(Math.random() * (n - 1));
+    return { bean: n - c, cream: c };
+  }
+  return Math.random() < cfg.creamRatio ? { bean: 0, cream: n } : { bean: n, cream: 0 };
+}
+
+// ───────────────────────── 랭킹 (기기 안 상위 10개) ─────────────────────────
+// story: 스토리 모드(엔딩 때 가진 돈) · bean: 3분 챌린지 팥 · mix: 3분 챌린지 팥 & 슈크림
+const RANK_KEYS = { story: 'cnation-bb-story-rank-v1', bean: 'cnation-bb-rank-bean-v1', mix: 'cnation-bb-rank-mix-v1' };
+const RANK_NAMES = { story: '스토리 모드', bean: '3분 챌린지 팥', mix: '3분 챌린지 팥 & 슈크림' };
+const Ranks = {
+  read(board) {
+    try { const r = JSON.parse(localStorage.getItem(RANK_KEYS[board]) || '[]'); return Array.isArray(r) ? r : []; } catch { return []; }
+  },
+  // 넣었을 때 몇 등인지 (10등 밖이면 -1)
+  place(board, money) {
+    const r = Ranks.read(board);
+    const i = r.findIndex((x) => money > x.money);
+    const at = i < 0 ? r.length : i;
+    return at < 10 ? at : -1;
+  },
+  add(board, entry) {
+    const r = Ranks.read(board);
+    r.push(entry);
+    r.sort((a, b) => b.money - a.money || (b.sat || 0) - (a.sat || 0));
+    const top = r.slice(0, 10);
+    try { localStorage.setItem(RANK_KEYS[board], JSON.stringify(top)); } catch { /* 무시 */ }
+    return top.indexOf(entry);
+  },
+  lastName() { try { return localStorage.getItem('cnation-bb-name') || ''; } catch { return ''; } },
+  rememberName(n) { try { localStorage.setItem('cnation-bb-name', n); } catch { /* 무시 */ } },
+};
+// 예전 "최고 기록"(이름 없이 숫자만)을 3분 챌린지 팥 랭킹으로 옮긴다
+try {
+  const old = Number(localStorage.getItem('bb-best') || 0);
+  if (old > 0 && !Ranks.read('bean').length) Ranks.add('bean', { name: '예전 기록', money: old, sold: 0, date: '' });
+  localStorage.removeItem('bb-best');
+} catch { /* 무시 */ }
 
 // 반죽을 부으면 0.5초 동안 퍼지는 장면 (무늬 없는 반죽 → 팥을 올려도 무늬 없음 → 뒤집으면 무늬가 보인다)
 const POUR_FRAMES = ['pour1.webp', 'pour2.webp', 'pour3.webp', 'pour4.webp', 'batter.webp'];
@@ -38,6 +97,7 @@ const BREAD_IMG = {
   burnt: 'burnt.webp',
 };
 
+// 동물 손님 17종 (3분 챌린지와 스토리 모드 일반 손님). 사람 손님은 스토리 모드 특별 손님(story.js SPECIALS).
 // 손님마다 대사 5개를 번갈아 쓴다 (같은 손님이 바로 전에 한 대사는 다음에 나오지 않는다).
 // {n}에는 주문("2개", 슈크림이 있는 날은 "팥 2개랑 슈크림 1개" 등)이 들어가므로, 대사에 팥·슈크림 같은 종류 이름은 넣지 않는다.
 const CUSTOMERS = [
@@ -47,13 +107,6 @@ const CUSTOMERS = [
     '{n} 주세요~ 손이 꽁꽁 얼었어요.',
     '따끈한 걸로 {n} 부탁해요~',
     '털이 많아도 겨울은 추워요. {n}요!',
-  ] },
-  { id: 'auntie', lines: [
-    '붕어빵 {n} 빨리요~ 우리 윤이가 엄청 좋아한단 말이에요~',
-    '사장님, {n} 주세요~ 윤이 간식이에요!',
-    '윤이가 학원 끝나고 먹을 거예요. {n}요!',
-    '오늘은 윤이 친구들 것까지 {n}요~',
-    '윤이가 여기 붕어빵이 제일 맛있대요. {n}요!',
   ] },
   { id: 'deer', lines: [
     '붕어빵 {n} 바구니에 담아 주세요!',
@@ -103,6 +156,55 @@ const CUSTOMERS = [
     '얼음 위보다 여기가 따뜻해요. {n}요!',
     '박수 짝짝! {n} 주세요~',
     '데굴데굴 굴러왔어요. {n}요!',
+  ] },
+  { id: 'cat', lines: [
+    '냐옹~ 붕어빵 {n} 주세요!',
+    '생선 모양이라 그냥 못 지나쳐요. {n}요!',
+    '가방에 쏙 넣어 갈게요. {n} 주세요~',
+    '수염까지 얼었어요. {n}요!',
+    '따끈한 거 {n} 주시면 골골송 불러 드릴게요~',
+  ] },
+  { id: 'dog', lines: [
+    '멍! 붕어빵 {n} 주세요!',
+    '냄새 따라 달려왔어요! {n}요!',
+    '꼬리가 저절로 흔들려요. {n} 주세요~',
+    '산책 끝나고 먹을 거예요. {n}요!',
+    '털모자 써도 귀가 시려요. {n} 주세요!',
+  ] },
+  { id: 'bear', lines: [
+    '겨울잠 자기 전에 {n} 먹고 갈게요.',
+    '꿀 대신 붕어빵! {n} 주세요~',
+    '배가 너무 고파요. {n}요!',
+    '조끼 주머니에 넣어 갈게요. {n} 주세요!',
+    '느긋하게 기다릴게요. {n}요~',
+  ] },
+  { id: 'fox', lines: [
+    '눈이 반짝! 붕어빵 {n} 주세요~',
+    '꼬리로 몸 감싸도 추워요. {n}요!',
+    '소문 듣고 왔어요. {n} 주세요!',
+    '제일 노릇한 걸로 {n}요~',
+    '헤헤, 오늘도 왔어요. {n} 주세요!',
+  ] },
+  { id: 'panda', lines: [
+    '대나무보다 붕어빵! {n} 주세요~',
+    '귀마개 하고 왔어요. {n}요!',
+    '데굴데굴 굴러왔어요. {n} 주세요~',
+    '한 입만 먹고 싶었는데… {n}요!',
+    '포근한 붕어빵 {n} 부탁해요~',
+  ] },
+  { id: 'koala', lines: [
+    '음… 졸려요… {n} 주세요…',
+    '나무에서 내려왔어요. {n}요~',
+    '목도리 두르고 왔어요. {n} 주세요!',
+    '천천히… 하지만 따끈하게 {n}요…',
+    '잠 깨는 데는 붕어빵이죠. {n} 주세요!',
+  ] },
+  { id: 'duck', lines: [
+    '꽥! 붕어빵 {n} 주세요!',
+    '연못이 꽁꽁 얼었어요. {n}요!',
+    '뒤뚱뒤뚱 왔어요. {n} 주세요~',
+    '모자 쓰고 멋 부렸어요. {n}요!',
+    '꽥꽥! 빨리 {n} 주세요!',
   ] },
   { id: 'squirrel', lines: [
     '도토리 대신 붕어빵! {n} 주세요~',
@@ -292,7 +394,13 @@ $('pause-btn').addEventListener('click', () => pauseGame());
 $('resume-btn').addEventListener('click', () => resumeGame());
 $('restart-btn').addEventListener('click', () => { closePause(); startChallenge(); });
 $('quit-btn').addEventListener('click', () => { closePause(); running = false; showTitle(); });
-$('start-btn').addEventListener('click', () => startChallenge());
+$('start-btn').addEventListener('click', () => showChallengeMenu());
+$('ch-bean').addEventListener('click', () => startChallenge('bean'));
+$('ch-mix').addEventListener('click', () => startChallenge('mix'));
+$('ch-close').addEventListener('click', () => showTitle());
+$('ch-rank').addEventListener('click', () => Story.showRanking('bean'));
+$('rank-btn').addEventListener('click', () => Story.showRanking('story'));
+$('r-save').addEventListener('click', () => { $('r-save').disabled = true; saveChallengeRank(); });
 $('again-btn').addEventListener('click', () => startChallenge());
 $('help-btn').addEventListener('click', () => $('help').classList.remove('hidden'));
 $('help-close').addEventListener('click', () => $('help').classList.add('hidden'));
@@ -440,6 +548,12 @@ CUSTOMERS.forEach((c) => [c.id, c.id + '-sad'].forEach((name) => {
   im.src = SPRITE + name + '.webp';
   customerImgCache[name] = im;
 }));
+// 스토리 모드 특별 손님(사람) 그림도 미리 받아 둔다
+['courier', 'principal', 'grandpa', 'girl', 'boy', 'auntie', 'yuni'].forEach((id) => [id, id + '-sad'].forEach((name) => {
+  const im = new Image();
+  im.src = SPRITE + name + '.webp';
+  customerImgCache[name] = im;
+}));
 let customerImgToken = 0;
 // 그림을 완전히 그릴 수 있게 된 다음에 바꾼다 (늦게 끝난 이전 요청은 무시)
 function setCustomerImg(name, onReady) {
@@ -487,10 +601,12 @@ function spawnCustomer() {
   const p = progress();
   const need = cfg.need(p);
   const max = cfg.patience(p);
-  const c = { def, need, wait: max, max, phase: 'in', t: 0, mood: 'normal', ready: false };
+  const order = makeOrderFor(need);
+  const c = { def, need, order, left: { ...order }, wait: max, max, phase: 'in', t: 0, mood: 'normal', ready: false };
   customer = c;
   setCustomerImg(def.id, () => { c.ready = true; });   // 그림이 준비될 때까지는 숨겨 둔다
-  setBubble(pickLine(def).replace('{n}', `<span class="n">${need}개</span>`));
+  c.lineHtml = pickLine(def).replace('{n}', `<span class="n">${orderPhrase(order, cfg.cream)}</span>`);
+  setBubble(c.lineHtml);
   play('bell', 0.5);
 }
 
@@ -509,22 +625,36 @@ function onBag(kind = 'bean') {
   if (cfg.queue) return Story.serve(kind);       // 스토리 모드: 줄 선 손님에게 한 개씩
   play('bag');
   if (!customer || customer.phase !== 'wait') return hint('손님이 아직 없어요');
-  if (bagCount < customer.need) {
-    play('sad', 0.7);
-    customer.wait = Math.max(0, customer.wait - 2);
-    setBubble(`<span style="color:#c0392b">모자라요! <span class="n">${customer.need}개</span> 시켰어요!</span>`);
+  const c = customer;
+  const want = c.left[kind];
+  if (!want) {
+    if (c.order[kind]) return hint('그건 이미 다 드렸어요');
+    play('sad', 0.6);
+    setBubble('<span style="color:#c0392b">그건 안 시켰어요!</span>');
+    c.restoreAt = elapsed + 1.1;
     return;
   }
-  bagCount -= customer.need;
-  const allPerfect = bagPerfect.splice(0, customer.need).every(Boolean);
-  const ratio = customer.wait / customer.max;
-  const tip = ratio > 0.6 ? 200 * customer.need : 0;
-  const earned = customer.need * cfg.price + tip;
+  const bag = kind === 'cream' ? creamPerfect : bagPerfect;
+  if (bag.length < want) {
+    play('sad', 0.7);
+    c.wait = Math.max(0, c.wait - 2);
+    const what = cfg.cream ? `${kind === 'cream' ? '슈크림' : '팥'} ${want}개` : `${want}개`;
+    setBubble(`<span style="color:#c0392b">모자라요! <span class="n">${what}</span> 시켰어요!</span>`);
+    c.restoreAt = elapsed + 1.1;
+    return;
+  }
+  bag.splice(0, want);
+  if (kind === 'bean') bagCount = bagPerfect.length;
+  c.left[kind] = 0;
+  if (c.left.bean || c.left.cream) { play('collect', 0.5); return; }   // 다른 종류가 남았다
+  const ratio = c.wait / c.max;
+  const tip = ratio > 0.6 ? 200 * c.need : 0;
+  const sales = c.order.bean * cfg.price + c.order.cream * (cfg.price + 200);
+  const earned = sales + tip;
   money += earned;
-  stats.sold += customer.need;
-  stats.sales += customer.need * cfg.price;
+  stats.sold += c.need;
+  stats.sales += sales;
   stats.tips += tip;
-  if (mode === 'story') Story.onServed(ratio, allPerfect);
   play('happy');
   setBubble(`<b>${THANKS[Math.floor(Math.random() * THANKS.length)]}</b>`);
   toast(tip ? `+${earned.toLocaleString()}원 (팁 ${tip}원)` : `+${earned.toLocaleString()}원`);
@@ -532,13 +662,15 @@ function onBag(kind = 'bean') {
 }
 
 // ───────────────────────── 하루 흐름 ─────────────────────────
-const SCREENS = ['title', 'result', 'help', 'history'];   // story.js가 스토리 화면을 더한다
+const SCREENS = ['title', 'result', 'help', 'history', 'challenge-menu'];   // story.js가 스토리 화면을 더한다
 function hideScreens() { SCREENS.forEach((id) => $(id).classList.add('hidden')); }
 
 // 3분 챌린지 시작
-function startChallenge() {
+let challengeVariant = 'bean';
+function startChallenge(variant = challengeVariant) {
+  challengeVariant = variant;
   mode = 'challenge';
-  cfg = CHALLENGE;
+  cfg = variant === 'mix' ? CHALLENGE_MIX : CHALLENGE;
   startDay(0);
 }
 
@@ -564,6 +696,19 @@ function startDay(startMoney = 0) {
   playBgm(nextGameTrack, true);
 }
 
+// 3분 챌린지 랭킹에 이름 남기기
+let pendingRank = null;
+function saveChallengeRank() {
+  if (!pendingRank) return;
+  const name = ($('r-name').value || '').trim().slice(0, 8) || '이름 없음';
+  Ranks.rememberName(name);
+  const entry = { name, money: pendingRank.money, sold: pendingRank.sold, date: new Date().toISOString().slice(0, 10) };
+  const at = Ranks.add(pendingRank.board, entry);
+  const board = pendingRank.board;
+  pendingRank = null;
+  Story.showRanking(board, at);
+}
+
 // 장사가 끝났을 때 팔지 못한 붕어빵 (봉투 속 + 철판 위 다 익은 것). 보상은 없고 안내만 한다
 function leftoverText() {
   const n = bagCount + creamPerfect.length + molds.filter((m) => m.state === 'done').length;
@@ -586,16 +731,21 @@ function endDay() {
   nextGameTrack = pickGameTrack(nextGameTrack);
   loadBgm(nextGameTrack);   // 보통은 이미 받아 뒀다
   const net = money;
-  const best = Math.max(net, Number(localStorage.getItem('bb-best') || 0));
-  const isNew = net > 0 && net >= best && net > Number(localStorage.getItem('bb-best') || 0);
-  localStorage.setItem('bb-best', String(best));
+  const board = cfg.variant || 'bean';
+  const place = net > 0 ? Ranks.place(board, net) : -1;
+  pendingRank = place >= 0 ? { board, money: net, sold: stats.sold } : null;
+  $('r-title').textContent = `3분 챌린지 ${board === 'mix' ? '팥 & 슈크림' : '팥'} 정산`;
   $('r-sold').textContent = `${stats.sold}개`;
   $('r-sales').textContent = `+${stats.sales.toLocaleString()}원`;
   $('r-tips').textContent = `+${stats.tips.toLocaleString()}원`;
   $('r-cost').textContent = `-${stats.cost.toLocaleString()}원`;
   $('r-miss').textContent = `${stats.burnt}개 · ${stats.missed}명`;
   $('r-total').textContent = `${net.toLocaleString()}원`;
-  $('r-best').textContent = isNew ? '🎉 최고 기록이에요!' : `최고 기록 ${best.toLocaleString()}원`;
+  const top = Ranks.read(board)[0];
+  $('r-best').textContent = place === 0 ? '🎉 최고 기록이에요!' : place > 0 ? `🏅 랭킹 ${place + 1}위에 오를 수 있어요!` : top ? `1위 기록 ${top.money.toLocaleString()}원` : '';
+  $('r-rank').classList.toggle('hidden', !pendingRank);
+  $('r-name').value = Ranks.lastName();
+  $('r-save').disabled = false;
   $('r-leftover').textContent = leftoverText();
   $('result').classList.remove('hidden');
 }
@@ -625,12 +775,19 @@ function resumeGame() {
   playBgm(currentBgm);
 }
 
+function showChallengeMenu() {
+  hideScreens();
+  const best = (b) => { const t = Ranks.read(b)[0]; return t ? `1위 ${t.money.toLocaleString()}원` : '아직 기록 없음'; };
+  $('ch-bean-best').textContent = best('bean');
+  $('ch-mix-best').textContent = best('mix');
+  $('challenge-menu').classList.remove('hidden');
+}
+
 function showTitle() {
   running = false;
   hideScreens();
   $('title').classList.remove('hidden');
-  const best = Number(localStorage.getItem('bb-best') || 0);
-  $('best-text').textContent = best > 0 ? `3분 챌린지 최고 기록 ${best.toLocaleString()}원` : '';
+  $('best-text').textContent = '';
   playBgm('title');
 }
 
@@ -663,6 +820,7 @@ function update(dt) {
     if (customer.phase === 'in' && customer.t >= 0.45) { customer.phase = 'wait'; customer.t = 0; }
     else if (customer.phase === 'wait') {
       customer.wait -= dt;
+      if (customer.restoreAt && elapsed >= customer.restoreAt) { customer.restoreAt = 0; setBubble(customer.lineHtml); }
       if (customer.wait <= 0) {
         stats.missed++;
         play('sad', 0.7);
@@ -745,7 +903,9 @@ function render() {
     drawBag('bag-img', 'bag-count', 'bag', bagCount, need.bean > 0 && bagCount > 0);
     drawBag('bag-cream-img', 'bag-cream-count', 'bag-cream', creamPerfect.length, need.cream > 0 && creamPerfect.length > 0);
   } else {
-    drawBag('bag-img', 'bag-count', 'bag', bagCount, customer && customer.phase === 'wait' && bagCount >= customer.need);
+    const w = customer && customer.phase === 'wait' ? customer.left : { bean: 0, cream: 0 };
+    drawBag('bag-img', 'bag-count', 'bag', bagCount, w.bean > 0 && bagCount >= w.bean);
+    if (cfg.cream) drawBag('bag-cream-img', 'bag-cream-count', 'bag-cream', creamPerfect.length, w.cream > 0 && creamPerfect.length >= w.cream);
   }
 
   // 손님
@@ -771,6 +931,7 @@ function render() {
     cImg.style.transform = `translateX(${x}px) scale(${s})`;
     bubble.style.transform = `scale(${bs})`;
     const r = customer.phase === 'wait' ? customer.wait / customer.max : customer.phase === 'in' ? 1 : 0;
+    if (cfg.cream && customer.order) { const ct = countText(customer.order, customer.left); if ($('order-chip').textContent !== ct) $('order-chip').textContent = ct; }
     const fill = $('patience-fill');
     fill.style.width = `${Math.max(0, r) * 100}%`;
     fill.style.background = r > 0.6 ? '#5dbb63' : r > 0.3 ? '#f5a623' : '#e74c3c';

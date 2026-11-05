@@ -44,6 +44,7 @@
       <img id="customer-img" alt="손님">
     </div>
     <div id="bubble">
+      <span id="bubble-name"></span>
       <div id="bubble-text"></div>
       <div id="bubble-row"><span id="order-chip"></span><div id="patience"><div id="patience-fill"></div></div></div>
     </div>
@@ -103,7 +104,10 @@
       <div class="title-menu">
         <button class="btn" id="story-btn">스토리 모드</button>
         <button class="btn alt" id="start-btn">3분 챌린지</button>
-        <button class="btn ghost" id="help-btn">게임 방법</button>
+        <div class="btn-row">
+          <button class="btn ghost" id="help-btn">게임 방법</button>
+          <button class="btn ghost" id="rank-btn">랭킹</button>
+        </div>
         <p class="best" id="best-text"></p>
       </div>
       <p class="version-line">version <span id="version-text"></span> (<button type="button" class="link-btn" id="history-btn">revision history</button>)</p>
@@ -134,20 +138,31 @@
           <li><b>Day 4</b>부터 <b>슈크림</b> 메뉴가 생겨요. 반죽 위에 슈크림을 올려 구우면 슈크림 봉투에 담겨요. 안 시킨 종류를 건네면 손님이 돌려주고 만족도가 조금 내려가요. <b>Day 8</b>부터는 섞어서 시키는 손님도 와요.</li>
           <li>장사가 끝나면 <b>상점</b>에서 번 돈으로 가게를 업그레이드할 수 있어요. 간판과 가격 인상은 더 벌 수 있지만 장사가 어려워지니, 자신 있을 때 사세요.</li>
           <li>만족도가 <b>0%</b>가 되면 게임 오버예요. <b>그날 처음부터 다시</b>는 스토리 모드에서 딱 한 번 쓸 수 있고, 다시 한 날은 그날 순이익의 50%를 재기 비용으로 반납해요.</li>
+          <li>가끔 <b>특별 손님</b>이 와요. 종이 두 번 울리고 말풍선 위에 이름표가 붙어요. 하루에 한 명(Day 9부터 두 명)까지 와요.
+            <br>· <b>택배기사</b>: 아주 급해요. 제때 건네면 한 개에 600원씩 팁을 줘요.
+            <br>· <b>동네 할아버지</b>: Day 2에 처음 와서 주문을 알려 줘요. 다음부터는 "늘 먹던 걸로"만 말하니 기억해 두세요!
+            <br>· <b>초등학생(여자아이)</b>: 500원밖에 없어요. 500원에 팔면 만족도가 올라요.
+            <br>· <b>초등학생(남자아이)</b>: 받는 도중에 주문을 바꿔요.
+            <br>· <b>윤이 엄마</b>: 30% 깎아 줘요. 기분 좋게 가면 동네에 소문을 내서 한동안 손님이 더 자주 와요.
+            <br>· <b>유치원 원장님</b>: 단체 주문이에요. 느긋하게 기다려 주고, 다 건네면 3,000원 보너스를 줘요.
+            <br>· <b>윤이</b>: 윤이 엄마를 만난 뒤에 와요. 엄마가 기분 좋게 갔다면 팁을 넉넉히 줘요.</li>
           <li>Day 15까지 마치면 만족도에 따라 엔딩이 달라지고, 그때 <b>가진 돈</b>으로 랭킹에 올라가요.</li>
           <li>하루가 시작될 때 자동으로 저장돼요. 장사 도중에 나가면 다음에 그날 아침부터 다시 해요.</li>
         </ul>
 
         <h3 class="help-head">3분 챌린지</h3>
         <ul class="help-list">
-          <li><b>3분 챌린지</b>를 누르면 3분 동안 장사해요. 아침 → 노을 → 밤으로 갈수록 붕어빵이 빨리 익고, 손님도 덜 기다려요.</li>
-          <li>붕어빵은 한 개에 <b>1,000원</b>, 반죽을 한 번 부을 때마다 재료비 <b>300원</b>이 들어요.</li>
+          <li><b>3분 챌린지</b>는 3분 동안 최대한 많이 파는 속도전이에요. <b>팥</b>만 굽거나, <b>팥 &amp; 슈크림</b>을 함께 구울지 골라서 시작해요. 동물 손님만 와요.</li>
+          <li>아침 → 노을 → 밤으로 갈수록 붕어빵이 빨리 익고, 손님도 덜 기다려요.</li>
+          <li>붕어빵은 한 개에 <b>1,000원</b>(슈크림은 1,200원), 반죽을 한 번 부을 때마다 재료비 <b>300원</b>이 들어요.</li>
+          <li>봉투를 누르면 그 종류를 주문한 만큼 한꺼번에 건네요. 팥 &amp; 슈크림에서는 두 가지를 섞어 시키는 손님도 있으니 두 봉투를 모두 건네야 해요.</li>
           <li>손님 인내심 바가 <b>초록색</b>일 때 건네면 한 개에 <b>200원</b>씩 팁을 받아요.</li>
-          <li>봉투에 주문보다 적게 담긴 채 건네면 손님이 더 조급해져요.</li>
+          <li>봉투에 주문보다 적게 담긴 채 건네면 "모자라요!" 하고 손님이 더 조급해져요.</li>
           <li>손님을 너무 오래 기다리게 하면 그냥 떠나요.</li>
           <li>다 익은 붕어빵을 오래 두면 타요. 탄 붕어빵은 꼬챙이로 눌러 치워요.</li>
           <li>봉투에는 붕어빵을 <b>9개</b>까지 담을 수 있어요.</li>
-          <li>장사가 끝나면 매출 · 팁 · 재료비로 순이익을 계산하고, 가장 많이 번 날은 <b>최고 기록</b>으로 남아요.</li>
+          <li>장사가 끝나면 매출 · 팁 · 재료비로 순이익을 계산하고, 10위 안에 들면 이름을 적어 <b>랭킹</b>에 올릴 수 있어요.</li>
+          <li>랭킹은 <b>스토리 모드 · 3분 팥 · 3분 팥 &amp; 슈크림</b> 세 가지로 따로 관리해요. 처음 화면의 <b>랭킹</b> 버튼에서 탭을 눌러 볼 수 있어요.</li>
         </ul>
 
         <h3 class="help-head">알아 두면 좋아요</h3>
@@ -159,6 +174,18 @@
         </div>
         <button class="btn" id="help-close">알겠어요</button>
         <p class="credit">제작 : cnation(문명국) · 문의 : <a href="mailto:mmk75@naver.com">mmk75@naver.com</a></p>
+      </div>
+    </div>
+
+    <!-- 3분 챌린지: 팥 / 팥 & 슈크림 -->
+    <div id="challenge-menu" class="screen dim hidden">
+      <div class="panel story-panel">
+        <h2>3분 챌린지</h2>
+        <p class="story-desc">3분 동안 최대한 많이 팔아 보세요! 동물 손님만 와요. 어떤 붕어빵으로 도전할까요?</p>
+        <button class="btn" id="ch-bean">팥<small id="ch-bean-best"></small></button>
+        <button class="btn alt" id="ch-mix">팥 & 슈크림<small id="ch-mix-best"></small></button>
+        <button class="btn ghost" id="ch-rank">랭킹</button>
+        <button class="btn ghost" id="ch-close">닫기</button>
       </div>
     </div>
 
@@ -249,7 +276,8 @@
 
     <div id="ranking" class="screen dim hidden">
       <div class="panel story-panel">
-        <h2>스토리 모드 랭킹</h2>
+        <h2>랭킹</h2>
+        <div class="rank-tabs" id="rank-tabs"><button data-board="story">스토리</button><button data-board="bean">3분 팥</button><button data-board="mix">3분 팥&amp;슈</button></div>
         <div class="rank-list" id="rank-list"></div>
         <button class="btn" id="rank-close">처음 화면으로</button>
       </div>
@@ -275,7 +303,7 @@
     <!-- 정산 -->
     <div id="result" class="screen dim hidden">
       <div class="panel receipt">
-        <h2>오늘의 장사 정산</h2>
+        <h2 id="r-title">오늘의 장사 정산</h2>
         <div class="row"><span>판매한 붕어빵</span><b id="r-sold">0개</b></div>
         <div class="row plus"><span>판매 매출</span><b id="r-sales">+0원</b></div>
         <div class="row plus"><span>손님 팁</span><b id="r-tips">+0원</b></div>
@@ -285,6 +313,10 @@
         <div class="row total"><span>순이익</span><b id="r-total">0원</b></div>
         <p class="best" id="r-best"></p>
         <p class="leftover" id="r-leftover"></p>
+        <div class="rank-entry hidden" id="r-rank">
+          <input id="r-name" class="end-name" maxlength="8" autocomplete="off" placeholder="랭킹에 남길 이름">
+          <button class="btn" id="r-save">랭킹에 올리기</button>
+        </div>
         <button class="btn" id="again-btn">내일 다시 장사하기</button>
         <button class="btn ghost" id="home-btn">처음으로</button>
       </div>
