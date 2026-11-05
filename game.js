@@ -236,7 +236,6 @@ const stats = { sold: 0, sales: 0, tips: 0, cost: 0, burnt: 0, missed: 0 };
 let customer = null;           // { def, need, wait, max, phase, t }
 let nextCustomerIn = 0;
 let toastUntil = 0;
-let shakeUntil = 0;
 
 function progress() { return Math.min(1, elapsed / DAY_LENGTH); }
 
@@ -413,7 +412,6 @@ function onBag() {
   if (!customer || customer.phase !== 'wait') return hint('손님이 아직 없어요');
   if (bagCount < customer.need) {
     play('sad', 0.7);
-    shakeUntil = elapsed + 0.45;
     customer.wait = Math.max(0, customer.wait - 2);
     setBubble(`<span style="color:#c0392b">모자라요! <span class="n">${customer.need}개</span> 시켰어요!</span>`);
     return;
@@ -613,8 +611,8 @@ function render() {
       x = -200 * k * k; bs = 1 - Math.min(1, k * 2);
       if (customer.mood !== 'sad' && customer.t < 0.8) s = 1 + 0.06 * Math.sin(customer.t * 12);
     }
-    const shake = elapsed < shakeUntil ? 6 * Math.sin(elapsed * 60) : 0;
-    cImg.style.transform = `translateX(${x + shake}px) scale(${s})`;
+    // (손님이 좌우로 떨리는 연출은 뺐다: 떨림이 끝나는 시각이 다음 장사까지 남아서 새 손님이 계속 떨리는 일이 있었다)
+    cImg.style.transform = `translateX(${x}px) scale(${s})`;
     bubble.style.transform = `scale(${bs})`;
     const r = customer.phase === 'wait' ? customer.wait / customer.max : customer.phase === 'in' ? 1 : 0;
     const fill = $('patience-fill');
