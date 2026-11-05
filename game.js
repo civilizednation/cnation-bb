@@ -74,7 +74,16 @@ function satServeDelta(ratio, combo, allPerfect) {
   if (allPerfect) d += SAT.perfect;
   return d;
 }
+let lastSatDrawn = null;
 function drawSat(v) {
+  if (lastSatDrawn !== null && Math.abs(v - lastSatDrawn) >= 0.5) {
+    const d = v - lastSatDrawn, el = $('sat-delta');
+    el.textContent = `${d > 0 ? '+' : ''}${Math.round(d) || (d > 0 ? '+0.5' : '-0.5')}`;
+    el.className = d > 0 ? 'up' : 'down';
+    void el.offsetWidth; el.classList.add('show');
+    if (d < 0) { const pill = $('sat-text').parentElement; pill.classList.remove('hit'); void pill.offsetWidth; pill.classList.add('hit'); }
+  }
+  lastSatDrawn = v;
   $('sat-text').textContent = Math.round(v);
   $('sat-face').textContent = v >= 70 ? '😊' : v >= 40 ? '😐' : '😟';
   const f = $('sat-fill');
@@ -448,6 +457,7 @@ $('history-list').innerHTML = CHANGELOG.map((r) => `
 $('home-btn').addEventListener('click', () => showTitle());
 
 // ───────────────────────── 게임 상태 ─────────────────────────
+let hudMode = 'challenge';   // 위쪽 만족도 칸이 어느 모드 값을 보여 주는지 (장사가 끝나도 정산 화면까지 유지)
 let mode = 'challenge';        // 'challenge' (3분 챌린지) | 'story'
 let cfg = CHALLENGE;
 let running = false;
@@ -716,6 +726,8 @@ function startChallenge(variant = challengeVariant) {
 function startDay(startMoney = 0) {
   hideScreens();
   document.body.classList.toggle('story-mode', mode === 'story');
+  hudMode = mode;
+  lastSatDrawn = null;
   running = true;
   elapsed = 0;
   bagCount = 0;
@@ -925,7 +937,7 @@ function render() {
 
   $('money-text').textContent = money.toLocaleString();
   $('sold-text').textContent = stats.sold;
-  if (mode === 'story') Story.renderHud();
+  if (hudMode === 'story') Story.renderHud();
   else drawSat(chSat);
 
   // 철판

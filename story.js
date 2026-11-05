@@ -251,6 +251,7 @@ const Story = (() => {
   // 그날 아침 가게 모습으로 정리한다 (전날 마지막 손님·틀 상태가 이야기 화면 뒤에 남지 않게)
   function prepareScene(day) {
     mode = 'story';
+    hudMode = 'story'; lastSatDrawn = null;   // 이야기 화면 뒤 만족도 칸도 스토리 값으로
     cfg = buildCfg(day, save.upgrades);
     document.body.classList.add('story-mode');
     running = false;
@@ -777,8 +778,11 @@ const Story = (() => {
       if (e.sp === 'boy' && !e.changed && (e.left.bean || e.left.cream)) changeOrder(e);
       else if (e.sp === 'boy' && !e.changed && !e.left.bean && !e.left.cream) { changeOrder(e, true); return; }
       if (!e.left.bean && !e.left.cream) complete(e);
+    } else if (e.order[kind] > 0) {
+      // 시킨 종류인데 이미 다 받았다: 벌은 없고 안내만 (3분 챌린지와 같게)
+      hint('그건 이미 다 드렸어요');
     } else {
-      // 안 시킨 종류 (또는 이미 다 받은 종류): 돌려주고 만족도 조금 감소
+      // 안 시킨 종류: 돌려주고 만족도 감소
       today.wrong++;
       const wsp = e.sp ? SPECIALS[e.sp] : null;
       changeSat(wsp && wsp.wrongPenalty ? wsp.wrongPenalty : SAT.wrong);
