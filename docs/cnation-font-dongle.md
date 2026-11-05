@@ -91,7 +91,7 @@ await Promise.all([400, 700].map((w) => document.fonts.load(`${w} 16px Dongle`, 
 
 ## 3-1. 긴 글은 IBM Plex Sans KR 400과 함께 쓰기
 
-Dongle은 짧은 글에는 귀엽지만, 굽는 법이나 업데이트 기록처럼 긴 글은 읽기 힘듭니다. 그래서 긴 글에만 cnation 폰트 조합 #1의 **IBM Plex Sans KR Regular(400)**를 씁니다.
+Dongle은 짧은 글에는 귀엽지만, 게임 방법이나 업데이트 기록처럼 긴 글은 읽기 힘듭니다. 그래서 긴 글에만 cnation 폰트 조합 #1의 **IBM Plex Sans KR Regular(400)**를 씁니다.
 
 - 파일: `fonts/IBMPlexSansKR-Regular.woff2` (같은 글자 범위로 서브셋, 2.8MB → 517KB), 라이선스 `fonts/OFL-IBMPlexSansKR.txt`
 - Plex는 보정 없이 그대로 씁니다. 크기는 **13.5px**, 줄 높이 1.55~1.6, 글자 간격 -0.2px입니다. 360×640 화면 기준으로 13px는 빽빽하고, 14px부터 3줄로 넘어가는 항목이 생깁니다.

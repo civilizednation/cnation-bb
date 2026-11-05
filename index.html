@@ -91,16 +91,18 @@
       </div>
       <div class="title-menu">
         <button class="btn" id="start-btn">장사 시작하기</button>
-        <button class="btn ghost" id="help-btn">굽는 법</button>
+        <button class="btn ghost" id="help-btn">게임 방법</button>
         <p class="best" id="best-text"></p>
       </div>
       <p class="version-line">version <span id="version-text"></span> (<button type="button" class="link-btn" id="history-btn">revision history</button>)</p>
     </div>
 
-    <!-- 굽는 법 -->
+    <!-- 게임 방법: 맨 위에 굽는 법, 그 아래에 자세한 규칙 (길어지면 안에서 스크롤) -->
     <div id="help" class="screen dim hidden">
       <div class="panel">
-        <h2>붕어빵 굽는 법</h2>
+        <h2>게임 방법</h2>
+        <div class="help-scroll">
+        <h3 class="help-head">붕어빵 굽는 법</h3>
         <ol class="steps">
           <li><img src="assets/sprites/kettle.webp" alt=""><span><b>반죽</b>을 들고 빈 틀을 눌러 반죽을 부어요.</span></li>
           <li><img src="assets/sprites/bean.webp" alt=""><span><b>팥</b>을 들고 반죽 위를 눌러 팥을 올려요.</span></li>
@@ -108,6 +110,26 @@
           <li><img src="assets/sprites/good.webp" alt=""><span>노릇해지면 꼬챙이로 눌러 <b>봉투</b>에 담아요. 너무 오래 두면 타요!</span></li>
           <li><img src="assets/sprites/bag2.webp" alt=""><span>주문한 개수만큼 담기면 <b>봉투</b>를 눌러 건네요.</span></li>
         </ol>
+
+        <h3 class="help-head">3분 챌린지</h3>
+        <ul class="help-list">
+          <li><b>장사 시작하기</b>를 누르면 3분 동안 장사해요. 아침 → 노을 → 밤으로 갈수록 붕어빵이 빨리 익고, 손님도 덜 기다려요.</li>
+          <li>붕어빵은 한 개에 <b>1,000원</b>, 반죽을 한 번 부을 때마다 재료비 <b>300원</b>이 들어요.</li>
+          <li>손님 인내심 바가 <b>초록색</b>일 때 건네면 한 개에 <b>200원</b>씩 팁을 받아요.</li>
+          <li>봉투에 주문보다 적게 담긴 채 건네면 손님이 더 조급해져요.</li>
+          <li>손님을 너무 오래 기다리게 하면 그냥 떠나요.</li>
+          <li>다 익은 붕어빵을 오래 두면 타요. 탄 붕어빵은 꼬챙이로 눌러 치워요.</li>
+          <li>봉투에는 붕어빵을 <b>9개</b>까지 담을 수 있어요.</li>
+          <li>장사가 끝나면 매출 · 팁 · 재료비로 순이익을 계산하고, 가장 많이 번 날은 <b>최고 기록</b>으로 남아요.</li>
+        </ul>
+
+        <h3 class="help-head">알아 두면 좋아요</h3>
+        <ul class="help-list">
+          <li>장사 중 <b>⏸ 버튼</b>으로 잠깐 쉴 수 있어요. 계속하기 · 처음부터 다시 하기 · 처음 화면으로를 고를 수 있어요.</li>
+          <li>다른 앱으로 나갔다 오면 자동으로 일시정지돼요.</li>
+          <li><b>🔊 버튼</b>으로 소리를 켜고 끌 수 있어요.</li>
+        </ul>
+        </div>
         <button class="btn" id="help-close">알겠어요</button>
         <p class="credit">제작 : cnation(문명국) · 문의 : <a href="mailto:mmk75@naver.com">mmk75@naver.com</a></p>
       </div>

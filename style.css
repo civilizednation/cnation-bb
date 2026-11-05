@@ -455,6 +455,35 @@ img { -webkit-user-drag: none; }
   font-weight: 700;
   color: #6b330c;
 }
+.help-scroll {
+  max-height: 404px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.help-head {
+  margin-top: 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #6b330c;
+}
+.help-head:first-child { margin-top: 0; }
+.help-list {
+  padding: 10px 12px 10px 28px;
+  border-radius: 14px;
+  background: rgba(255, 250, 238, .85);
+  font-family: var(--font-text);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: -0.2px;
+  word-break: keep-all;
+  color: #4a2a12;
+}
+.help-list li + li { margin-top: 4px; }
+.help-list b { font-weight: 400; color: #c8560f; }   /* 400 한 굵기만 쓰므로 강조는 색으로 */
 .steps { list-style: none; display: flex; flex-direction: column; gap: 8px; }
 .steps li {
   display: flex;
