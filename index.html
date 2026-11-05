@@ -56,7 +56,7 @@
     <div id="bench">
       <button id="bag" aria-label="봉투를 손님에게 건네기">
         <img id="bag-img" src="assets/sprites/bag0.webp" alt="">
-        <span id="bag-count">0</span>
+        <span id="bag-count">0<small>/9</small></span>
       </button>
       <button class="tool" data-tool="batter" aria-label="반죽">
         <img src="assets/sprites/kettle.webp" data-on="assets/sprites/kettle-on.webp" data-off="assets/sprites/kettle.webp" alt="">
@@ -168,6 +168,7 @@
         <hr>
         <div class="row total"><span>순이익</span><b id="r-total">0원</b></div>
         <p class="best" id="r-best"></p>
+        <p class="leftover" id="r-leftover"></p>
         <button class="btn" id="again-btn">내일 다시 장사하기</button>
         <button class="btn ghost" id="home-btn">처음으로</button>
       </div>

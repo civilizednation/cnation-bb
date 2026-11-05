@@ -448,6 +448,12 @@ function startDay() {
   playBgm(nextGameTrack, true);
 }
 
+// 장사가 끝났을 때 팔지 못한 붕어빵 (봉투 속 + 철판 위 다 익은 것). 보상은 없고 안내만 한다
+function leftoverText() {
+  const n = bagCount + molds.filter((m) => m.state === 'done').length;
+  return n ? `붕어빵 ${n}개가 남아서 동네 이웃에게 나눠 줬어요. 재료비는 날렸지만 기분은 나쁘지 않아요~` : '';
+}
+
 function endDay() {
   running = false;
   play('start');
@@ -467,6 +473,7 @@ function endDay() {
   $('r-miss').textContent = `${stats.burnt}개 · ${stats.missed}명`;
   $('r-total').textContent = `${net.toLocaleString()}원`;
   $('r-best').textContent = isNew ? '🎉 최고 기록이에요!' : `최고 기록 ${best.toLocaleString()}원`;
+  $('r-leftover').textContent = leftoverText();
   $('result').classList.remove('hidden');
 }
 
@@ -533,7 +540,7 @@ function update(dt) {
     } else if (customer.phase === 'out' && customer.t >= 1.3) {
       customer = null;
     }
-  } else if (elapsed < DAY_LENGTH - 4) {
+  } else if (elapsed < DAY_LENGTH - 2) {   // 마감 2초 전부터는 새 손님이 오지 않는다
     nextCustomerIn -= dt;
     if (nextCustomerIn <= 0) spawnCustomer();
   }
@@ -582,7 +589,10 @@ function render() {
   const bagSrc = `${SPRITE}bag${Math.min(3, bagCount)}.webp`;
   const bagImg = $('bag-img');
   if (bagImg.getAttribute('src') !== bagSrc) bagImg.setAttribute('src', bagSrc);
-  $('bag-count').textContent = bagCount;
+  const bagText = `${bagCount}<small>/${BAG_MAX}</small>`;
+  const bc = $('bag-count');
+  if (bc.innerHTML !== bagText) bc.innerHTML = bagText;
+  bc.classList.toggle('full', bagCount >= BAG_MAX);
   const ready = customer && customer.phase === 'wait' && bagCount >= customer.need;
   bagImg.style.transform = ready ? `translateY(${-3 * Math.abs(Math.sin(elapsed * 6))}px)` : '';
 

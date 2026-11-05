@@ -110,7 +110,7 @@ img { -webkit-user-drag: none; }
 /* ───── 상단 정보 ───── */
 #hud {
   position: absolute;
-  left: 8px; right: 8px; top: 66px;
+  left: 8px; right: 8px; top: 14px;   /* 천막 위에 올려서 하늘 배경을 넓게 보이게 */
   height: 32px;
   display: flex;
   align-items: center;
@@ -127,9 +127,9 @@ img { -webkit-user-drag: none; }
   font-variant-numeric: tabular-nums;
 }
 .pill.timer {
-  width: 88px;
-  padding: 0 10px 0 9px;
-  gap: 6px;
+  width: 72px;
+  padding: 0 8px 0 7px;
+  gap: 4px;
   background-image: url(assets/sprites/timer-pill.webp);
   color: #fff;
 }
@@ -140,8 +140,8 @@ img { -webkit-user-drag: none; }
   flex: none;
 }
 .pill.money {
-  width: 104px;
-  padding: 0 10px 0 36px;
+  width: 94px;
+  padding: 0 9px 0 33px;
   justify-content: flex-end;
   background-image: url(assets/sprites/money-pill.webp);
 }
@@ -309,9 +309,10 @@ img { -webkit-user-drag: none; }
 #bag-img { height: 80px; transform-origin: 50% 100%; }
 #bag-count {
   position: absolute;
-  right: 2px; top: 0;
+  right: -4px; top: 0;
   min-width: 26px; height: 26px;
-  padding: 0 6px;
+  padding: 0 7px;
+  white-space: nowrap;
   border-radius: 13px;
   background: #e2541c;
   color: #fff;
@@ -320,6 +321,16 @@ img { -webkit-user-drag: none; }
   line-height: 26px;
   box-shadow: 0 2px 0 rgba(0, 0, 0, .2);
 }
+#bag-count small { font-size: 11px; opacity: .85; }   /* 담은 개수 / 최대 개수 */
+#bag-count.full { background: #b3261e; }
+.leftover {
+  padding: 7px 10px;
+  border-radius: 12px;
+  background: rgba(255, 250, 238, .8);
+  font-family: var(--font-text);
+  font-size: 12px; line-height: 1.55; word-break: keep-all; color: #6b4a2e; text-align: center;
+}
+.leftover:empty { display: none; }
 .tool {
   flex: 1;
   border-radius: 16px;
