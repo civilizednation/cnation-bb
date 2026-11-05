@@ -316,7 +316,8 @@ const Story = (() => {
   function onBurnt() { today.burnt++; today.combo = 0; changeSat(SAT.burn); }
 
   function renderHud() {
-    const v = today ? today.sat : save ? save.satisfaction : SAT.start;
+    if (!today && !save) return;   // 엔딩 뒤 등: 마지막으로 그린 값을 그대로 둔다
+    const v = today ? today.sat : save.satisfaction;
     drawSat(v);
   }
 
@@ -346,6 +347,9 @@ const Story = (() => {
     save.money = money;
     save.satisfaction = today.sat;
     save.stats.sold += stats.sold; save.stats.missed += stats.missed; save.stats.burnt += stats.burnt;
+    // 엔딩에서 보여 줄 날마다의 기록
+    (save.history ||= []).push({ day, net, sat: Math.round(today.sat), sold: stats.sold, left: today.left, burnt: today.burnt,
+      met: today.specials.filter((x) => x.ok).map((x) => x.id) });
     const finished = day >= LAST_DAY;
     if (!finished) save.day = day + 1;
     save.finished = finished;
@@ -448,9 +452,36 @@ const Story = (() => {
     $s('end-sat').textContent = `${ending.sat}%`;
     $s('end-name').value = Ranks.lastName();
     $s('end-save').disabled = false;
+    $s('end-story').innerHTML = endingRecords(save);
     clearSave();   // 엔딩을 보면 스토리 저장은 끝난다
     show('ending');
     playBgm('title');
+  }
+  // 보름 장사 기록: 한 줄씩 차례로 나타난다 (CSS .end-rec 애니메이션)
+  function endingRecords(s) {
+    const h = s.history || [];
+    const items = [];
+    const add = (icon, label, value) => items.push(`<div class="end-rec" style="animation-delay:${0.35 + items.length * 0.45}s"><span>${icon} ${label}</span><b>${value}</b></div>`);
+    add('🗓️', '장사한 날', `${h.length || LAST_DAY}일`);
+    add('🐟', '판 붕어빵', `${s.stats.sold.toLocaleString()}개`);
+    if (h.length) {
+      const best = h.reduce((a, b) => (b.net > a.net ? b : a));
+      add('💰', '가장 많이 번 날', `Day ${best.day} · ${won(best.net)}`);
+      const perfect = h.filter((d) => !d.left && !d.burnt).length;
+      add('✨', '실수 없는 날', `${perfect}일`);
+    }
+    add('😢', '떠난 손님 · 탄 붕어빵', `${s.stats.missed}명 · ${s.stats.burnt}개`);
+    const met = new Set(h.flatMap((d) => d.met || []));
+    if (met.size) add('🏠', '만난 동네 사람', `${met.size}명`);
+    // 날마다 번 돈 막대
+    let chart = '';
+    if (h.length) {
+      const max = Math.max(1, ...h.map((d) => d.net));
+      chart = `<div class="end-chart" style="animation-delay:${0.35 + items.length * 0.45}s">${h.map((d) =>
+        `<i title="Day ${d.day}" style="height:${Math.max(4, Math.round(Math.max(0, d.net) / max * 100))}%;background:${d.sat >= 70 ? '#5dbb63' : d.sat >= 40 ? '#f5a623' : '#e74c3c'}"></i>`).join('')}</div>
+        <p class="end-chart-cap" style="animation-delay:${0.35 + items.length * 0.45}s">날마다 번 돈 (색: 그날 만족도)</p>`;
+    }
+    return items.join('') + chart;
   }
   function saveRank(inputId = 'end-name') {
     if (!ending) return;
@@ -1049,7 +1080,8 @@ const Story = (() => {
   on('go-save', () => saveRank('go-name'));
   on('go-new', () => { beginNew(); });
   on('go-home', () => showTitle());
-  on('end-save', saveRank);
+  on('end-save', () => saveRank('end-name'));   // 클릭 이벤트가 입력칸 id 자리로 넘어가지 않게
+  on('end-home', () => showTitle());
   on('rank-close', () => showTitle());
   on('notice-close', () => $s('story-notice').classList.add('hidden'));
   // 장사 중에 처음 화면으로 나가면 그날 장사는 저장되지 않는다 (다음에 그날 아침부터)

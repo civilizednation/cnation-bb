@@ -878,3 +878,13 @@ body.has-cream #bag-count, body.has-cream #bag-cream-count { font-size: 12px; mi
 @keyframes sat-pop { 0% { opacity: 0; transform: translateY(-4px); } 15% { opacity: 1; transform: translateY(0); } 75% { opacity: 1; } 100% { opacity: 0; transform: translateY(6px); } }
 .pill.sat.hit { animation: sat-hit .45s ease-out; }
 @keyframes sat-hit { 0%, 100% { box-shadow: inset 0 0 0 2px #e7a03f; } 30% { box-shadow: inset 0 0 0 3px #e74c3c, 0 0 8px rgba(231, 76, 60, .7); } }
+
+/* 엔딩: 보름 장사 기록 */
+#ending .panel { max-height: calc(100% - 24px); overflow-y: auto; }
+.end-story { display: flex; flex-direction: column; gap: 4px; }
+.end-rec { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 4px 10px; border-radius: 10px; background: rgba(255, 250, 238, .7); font-size: 15px; color: #5b2e10; opacity: 0; animation: end-rise .5s ease-out forwards; }
+.end-rec b { font-weight: 700; color: #6b330c; white-space: nowrap; }
+.end-chart { display: flex; align-items: flex-end; gap: 3px; height: 54px; padding: 4px 8px 0; margin-top: 4px; border-radius: 10px; background: rgba(255, 250, 238, .7); opacity: 0; animation: end-rise .5s ease-out forwards; }
+.end-chart i { flex: 1; border-radius: 3px 3px 0 0; min-height: 3px; }
+.end-chart-cap { margin: 2px 0 0; font-family: var(--font-text); font-size: 11px; color: #8a5a35; opacity: 0; animation: end-rise .5s ease-out forwards; }
+@keyframes end-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
