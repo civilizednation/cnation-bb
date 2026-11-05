@@ -1,3 +1,27 @@
+/* ───── 게임 전용 폰트: Dongle (OFL, fonts/OFL.txt) ─────
+   한글 11,172자 + 영문·숫자·기본 기호만 남긴 서브셋 (원본 4.4MB → 약 180KB).
+   쓰는 굵기는 두 가지뿐: 본문 400, 제목·강조·버튼·숫자 700.
+   Dongle은 글자가 작게 그려지고(한글 높이 0.61em, 기존 시스템 글꼴은 약 0.89em)
+   위아래 여백이 커서(줄 높이 1.45em) 두 가지를 맞췄다.
+   - size-adjust 145%: 기존 글꼴과 같은 글자 높이가 되게 키운다 (CSS의 font-size 값은 그대로 둔다)
+   - ascent/descent-override: 최종 줄 높이 1.2em, 글자가 줄 가운데에 오게 한다.
+     이 값도 size-adjust만큼 함께 커지므로 145%로 나눠서 넣었다.
+     (게임 속 한글 315자의 위·아래 끝 중앙값 기준: 글자 중심 0.128em) */
+@font-face {
+  font-family: 'Dongle';
+  src: url('fonts/Dongle-Regular.woff2') format('woff2');
+  font-weight: 400; font-style: normal; font-display: swap;
+  size-adjust: 145%;
+  ascent-override: 54.2%; descent-override: 28.6%; line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Dongle';
+  src: url('fonts/Dongle-Bold.woff2') format('woff2');
+  font-weight: 700; font-style: normal; font-display: swap;
+  size-adjust: 145%;
+  ascent-override: 54.2%; descent-override: 28.6%; line-gap-override: 0%;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -16,7 +40,8 @@ html, body {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  font-family: 'Dongle', -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  font-weight: 400;
   color: #3b230f;
 }
 
@@ -85,7 +110,7 @@ img { -webkit-user-drag: none; }
   display: flex;
   align-items: center;
   background-size: 100% 100%;
-  font-weight: 900;
+  font-weight: 700;
   font-size: 15px;
   font-variant-numeric: tabular-nums;
 }
@@ -126,7 +151,7 @@ img { -webkit-user-drag: none; }
 #pause-btn { margin-left: auto; display: flex; align-items: center; justify-content: center; gap: 3px; }
 #pause-btn i { width: 3.5px; height: 11px; border-radius: 1.5px; background: #6b330c; }
 .pause-panel { width: 260px; text-align: center; }
-.pause-time { font-size: 14px; font-weight: 800; color: #8a4a1d; margin-bottom: 4px; }
+.pause-time { font-size: 14px; font-weight: 700; color: #8a4a1d; margin-bottom: 4px; }
 
 /* ───── 손님과 말풍선 ───── */
 #customer {
@@ -162,7 +187,7 @@ img { -webkit-user-drag: none; }
 }
 #bubble-text {
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.4;
   word-break: keep-all;
   overflow-wrap: anywhere;
@@ -243,7 +268,7 @@ img { -webkit-user-drag: none; }
   background: #fff3d6;
   color: #9b4a12;
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 700;
   white-space: nowrap;
   pointer-events: none;
 }
@@ -278,7 +303,7 @@ img { -webkit-user-drag: none; }
   background: #e2541c;
   color: #fff;
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
   line-height: 26px;
   box-shadow: 0 2px 0 rgba(0, 0, 0, .2);
 }
@@ -295,7 +320,7 @@ img { -webkit-user-drag: none; }
   touch-action: none;
 }
 .tool img { width: 58px; height: 58px; }
-.tool span { font-size: 12px; font-weight: 900; }
+.tool span { font-size: 12px; font-weight: 700; }
 .tool.on {
   background: #ffe2a8;
   box-shadow: 0 3px 0 #e0a640, inset 0 0 0 3px #ffb02e;
@@ -310,7 +335,7 @@ img { -webkit-user-drag: none; }
   background: rgba(40, 24, 12, .88);
   color: #fff;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   white-space: nowrap;
   z-index: 9;
   pointer-events: none;
@@ -345,7 +370,7 @@ img { -webkit-user-drag: none; }
 #title h1 {
   margin-top: 6px;
   font-size: 40px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: -1px;
   color: #fff8ea;
   -webkit-text-stroke: 7px #8a4a1d;
@@ -355,7 +380,7 @@ img { -webkit-user-drag: none; }
 .title-sub {
   margin-top: 6px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   color: #8a4a1d;
   letter-spacing: 1px;
 }
@@ -373,7 +398,7 @@ img { -webkit-user-drag: none; }
   background: url(assets/sprites/button.webp) 0 0 / 100% 100% no-repeat;
   color: #fff;
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 700;
   text-shadow: 0 2px 0 rgba(140, 60, 0, .55);
   box-shadow: 0 4px 0 rgba(110, 50, 10, .45);
 }
@@ -387,7 +412,7 @@ img { -webkit-user-drag: none; }
 .best {
   min-height: 18px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   color: #fff8ea;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
 }
@@ -405,7 +430,7 @@ img { -webkit-user-drag: none; }
 .panel h2 {
   text-align: center;
   font-size: 21px;
-  font-weight: 900;
+  font-weight: 700;
   color: #6b330c;
 }
 .steps { list-style: none; display: flex; flex-direction: column; gap: 8px; }
@@ -417,7 +442,7 @@ img { -webkit-user-drag: none; }
   border-radius: 14px;
   background: rgba(255, 250, 238, .85);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   line-height: 1.4;
   word-break: keep-all;
 }
@@ -454,9 +479,9 @@ img { -webkit-user-drag: none; }
   background: rgba(255, 250, 238, .85);
   color: #4a2a12;
 }
-.history-item h3 { font-size: 15px; font-weight: 900; color: #6b330c; }
+.history-item h3 { font-size: 15px; font-weight: 700; color: #6b330c; }
 .history-item h3 small { margin-left: 6px; font-size: 11px; font-weight: 700; color: #a0703f; }
-.history-item ul { margin-top: 4px; padding-left: 16px; font-size: 12.5px; font-weight: 600; line-height: 1.5; word-break: keep-all; }
+.history-item ul { margin-top: 4px; padding-left: 16px; font-size: 12.5px; font-weight: 400; line-height: 1.5; word-break: keep-all; }
 .receipt .row {
   display: flex;
   justify-content: space-between;
@@ -482,7 +507,7 @@ img { -webkit-user-drag: none; }
 @keyframes bread-bob { 50% { transform: translateY(-6px) rotate(-3deg); } }
 .loading-title {
   font-size: 32px;
-  font-weight: 900;
+  font-weight: 700;
   color: #fff8ea;
   -webkit-text-stroke: 6px #8a4a1d;
   paint-order: stroke fill;
@@ -497,7 +522,7 @@ img { -webkit-user-drag: none; }
 }
 .loading-bar i { display: block; width: 0; height: 100%; border-radius: 5px; background: #ffb347; transition: width .2s; }
 #loading.ready .loading-bar { visibility: hidden; }
-.loading-text { min-height: 20px; font-size: 13px; font-weight: 800; color: #fff8ea; }
+.loading-text { min-height: 20px; font-size: 13px; font-weight: 700; color: #fff8ea; }
 #loading.ready .loading-text { font-size: 15px; animation: tap-pulse 1.4s ease-in-out infinite; }
 @keyframes tap-pulse { 50% { opacity: .45; } }
 .receipt .best { color: #6b330c; text-shadow: none; text-align: center; }

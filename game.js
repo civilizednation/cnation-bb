@@ -651,6 +651,8 @@ function startLoading() {
     ...sfxReady,
     loadBgm('title'),
     loadBgm(nextGameTrack),
+    // 게임 전용 폰트 두 굵기 (받기 전에 화면이 기본 폰트로 그려졌다 바뀌지 않게)
+    ...(document.fonts ? [400, 700].map((w) => document.fonts.load(`${w} 16px Dongle`, '붕어빵')) : []),
   ];
   let done = 0;
   const step = () => {
