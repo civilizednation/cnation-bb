@@ -96,7 +96,9 @@ const Story = (() => {
   }
 
   // ── 만족도 (기획안 4장) ──
-  const SAT = { start: 80, fast: 3, normal: 1, combo: 1, perfect: 1, leave: -8, burn: -1 };
+  // 만족도 규칙 (조정안): 오르기는 조건부·완만하게, 실수는 아프게. 80% 이상에서는 오르는 양이 절반
+  const SAT = { start: 70, fast: 2, normal: 1, slow: 0, late: -1, comboEvery: 5, combo: 1, perfect: 1,
+    leave: -12, leaveSpecial: -15, burn: -3, wrong: -4, highAt: 80, highMul: 0.5 };
 
   // ── 저장 (기획안 9장: 보내 주신 저장 코드를 이 게임에 맞게 고친 것) ──
   const SAVE_KEY = 'cnation-bb-story-v1', DB = 'cnation-bb-saves', STORE = 'slots', SAVE_VERSION = 1;
@@ -301,20 +303,22 @@ const Story = (() => {
   // ── 장사 중 만족도 ──
   function changeSat(delta) {
     if (!today) return;
+    if (delta > 0 && today.sat >= SAT.highAt) delta *= SAT.highMul;   // 높을수록 손님 기대치도 높다
     today.sat = Math.max(0, Math.min(100, today.sat + delta));
     if (today.sat <= 0 && running) gameOver();
   }
   function onServed(ratio, allPerfect) {
     today.served++;
     today.combo++;
-    let d = ratio > 0.7 ? SAT.fast : SAT.normal;
+    // 기다린 정도: 70% 넘게 남음 = 빠름, 35~70% 보통, 15~35% 느림(0), 15% 미만 겨우(-1)
+    let d = ratio > 0.7 ? SAT.fast : ratio > 0.35 ? SAT.normal : ratio > 0.15 ? SAT.slow : SAT.late;
     if (ratio > 0.7) today.fast++;
-    if (today.combo >= 3) { d += SAT.combo; setTimeout(() => toast(`🔥 ${today.combo}콤보! 만족도 +${d}`), 650); }
+    if (today.combo % SAT.comboEvery === 0) { d += SAT.combo; setTimeout(() => toast(`🔥 ${today.combo}콤보! 만족도 보너스`), 650); }
     if (allPerfect) { d += SAT.perfect; today.perfect++; }
     changeSat(d);
   }
-  function onMissed(penalty) { today.left++; today.combo = 0; changeSat(penalty || SAT.leave); }
-  function onBurnt() { today.burnt++; changeSat(SAT.burn); }
+  function onMissed(penalty, special) { today.left++; today.combo = 0; changeSat(penalty || (special ? SAT.leaveSpecial : SAT.leave)); }
+  function onBurnt() { today.burnt++; today.combo = 0; changeSat(SAT.burn); }
 
   function renderHud() {
     const v = today ? today.sat : save ? save.satisfaction : SAT.start;
@@ -560,7 +564,6 @@ const Story = (() => {
   const THANKS_WAIT = 0.6;      // 다 받은 손님이 "고마워요!" 하고 떠나기까지 (이 사이에 더 주면 덤)
   const CREAM_BONUS = 200;      // 슈크림 붕어빵은 200원 더 받는다
   const FRONT_DELAY = 0.6;      // 맨 앞 손님이 떠난 뒤 다음 손님 말풍선이 뜨기까지
-  SAT.wrong = -2;
 
   const queueEl = document.createElement('div');
   queueEl.id = 'queue';
@@ -626,14 +629,14 @@ const Story = (() => {
     courier: { name: '택배기사', from: 1, need: [1, 2], patience: 0.4, tipEach: 600,
       lines: ['배송 세 건 남았어요! {n} 빨리요!', '{n} 주세요! 트럭 세워 두고 왔어요!', '엘리베이터 고장이라 계단 탔어요… {n}요, 빨리!', '오늘만 택배가 백 개예요! {n} 부탁해요!', '{n}요! 빨리 주시면 팁 드릴게요!'],
       thanks: '덕분에 배송 늦지 않겠어요! 감사합니다!' },
-    principal: { name: '유치원 원장님', from: 1, need: [6, 9], patience: 2.5, bonus: 3000, satBonus: 5,
+    principal: { name: '유치원 원장님', from: 1, need: [6, 9], patience: 2.5, bonus: 3000, satBonus: 3,
       lines: ['아이들 간식으로 {n} 부탁드려요~', '오늘은 우리 반 아이들 모두 먹을 {n}요~', '선생님들 몫까지 {n} 넉넉히요~', '{n} 주세요~ 아이들이 손꼽아 기다려요!', '천천히 하셔도 돼요. {n} 부탁해요~'],
       thanks: '아이들이 정말 좋아하겠어요! 단체 주문 감사 인사예요~' },
     grandpa: { name: '동네 할아버지', from: 1, need: [2, 3], patience: 1.2,
       lines: ['{n} 주게. 내일부터 자주 올게.'],
       usual: ['늘 먹던 걸로 주게.', '허허, 늘 먹던 걸로.', '자네, 내가 늘 먹던 거 알지?'],
       thanks: '허허, 역시 기억하는구먼!' },
-    girl: { name: '초등학생', from: 1, need: [1, 1], fixedPrice: 500, satBonus: 3,
+    girl: { name: '초등학생', from: 1, need: [1, 1], fixedPrice: 500, satBonus: 2,
       lines: ['500원밖에 없는데… {n}만 주세요…', '용돈이 모자라요… {n}만 500원에 안 될까요?', '엄마 몰래 왔어요. 500원으로 {n}요!'],
       thanks: '고맙습니다! 착한 가게라고 소문낼게요!' },
     boy: { name: '초등학생', from: 1, need: [1, 3], change: true,
@@ -645,7 +648,7 @@ const Story = (() => {
       lines: ['배고파요… 급식 먹었는데 또 배고파요. {n}요.', '엄마가 여기 제일 맛있대요. {n} 주세요.', '학원 가기 전에 {n} 먹을게요.', '친구들 것까지 {n}요. 감사합니다!', '{n} 주세요. 엄마한테 자랑할 거예요.'],
       thanks: '엄마가 사장님 칭찬 엄청 했어요!' },
     // 현이: 윤이 형, 윤이 엄마의 첫째 아들. 서울 수방사에서 근무해서 휴가를 자주 나온다 (다른 동네 사람과 같은 규칙)
-    hyun: { name: '휴가 나온 현이', from: 1, need: [5, 8], patience: 0.8, tipEach: 400, satBonus: 5,
+    hyun: { name: '휴가 나온 현이', from: 1, need: [5, 8], patience: 0.8, tipEach: 400, satBonus: 3,
       lines: ['휴가 나왔습니다! {n} 부탁드립니다!', '부대에서 제일 생각났던 게 이거예요. {n}요!', '윤이 형입니다. 엄마가 꼭 들르래요. {n}요!', '복귀 전에 동기들 줄 {n} 포장이요!', '휴가가 짧아서요… {n} 빨리 부탁드립니다!'],
       thanks: '충성! 복귀해서도 이 맛 생각날 거예요!' },
     // ── v1.5.0 새 특별 손님 ──
@@ -909,7 +912,7 @@ const Story = (() => {
     play('sad', 0.7);
     const sp = e.sp ? SPECIALS[e.sp] : null;
     if (Q[0] === e) setBubble(`<span style="color:#7a6a5a">${sp && sp.leaveLine ? sp.leaveLine : '너무 오래 기다려서 그냥 갈게요...'}</span>`);
-    onMissed(sp && sp.leavePenalty);
+    onMissed(sp && sp.leavePenalty, !!sp);
     leave(e, false);
   }
 

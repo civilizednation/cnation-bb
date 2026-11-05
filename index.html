@@ -34,7 +34,7 @@
       </div>
       <div class="pill money"><span id="money-text">0</span></div>
       <div class="pill sold"><span id="sold-text">0</span></div>
-      <div class="pill sat" aria-label="손님 만족도"><span id="sat-face">😊</span><i><b id="sat-fill"></b></i><span id="sat-text">80</span></div>
+      <div class="pill sat" aria-label="손님 만족도"><span id="sat-face">😊</span><i><b id="sat-fill"></b></i><span id="sat-text">70</span></div>
       <button id="pause-btn" class="round-btn" aria-label="일시정지"><i></i><i></i></button>
       <button id="sound-btn" class="round-btn sound-toggle" aria-label="소리 켜기/끄기">🔊</button>
     </div>
@@ -130,7 +130,7 @@
         <h3 class="help-head">스토리 모드</h3>
         <ul class="help-list">
           <li>겨울 보름(<b>Day 1~15</b>) 동안 붕어빵 가게를 꾸려요. 하루 장사는 45~80초이고, 날이 갈수록 손님이 많아지고 주문도 커져요.</li>
-          <li>화면 위의 <b>😊 만족도</b>는 80%에서 시작해요. 빨리 건네거나 연속으로 잘 팔면 오르고, 손님이 기다리다 떠나거나 붕어빵을 태우면 내려가요.</li>
+          <li>화면 위의 <b>😊 만족도</b>는 70%에서 시작해요. 빨리 건네면 오르고(5명 연속이면 보너스), 오래 기다리게 하면 오르지 않거나 내려가요. 손님이 떠나면 -12(특별 손님은 -15), 붕어빵을 태우면 -3, 안 시킨 종류를 건네면 -4예요. <b>80%</b>가 넘으면 오르는 양이 절반이 돼요.</li>
           <li>"다 익었어요!"가 뜨자마자 꺼낸 <b>완벽한 붕어빵</b>만 건네면 만족도가 조금 더 올라요.</li>
           <li>틀은 처음에 4개, <b>Day 2</b>에 6개, <b>Day 5</b>에 9개로 늘어나요.</li>
           <li>손님은 <b>줄을 서요.</b> 항상 맨 앞 손님에게 건네고, 뒤에 선 손님일수록 천천히 지쳐요. 뒤 손님 머리 위 주문표로 무엇을 미리 구울지 정해요.</li>
@@ -172,17 +172,17 @@
         <p class="guest-sub">동네 사람 13명 · 스토리 모드에만 나와요</p>
         <ul class="help-list guest-rules">
           <li>매일 첫 번째·두 번째 손님은 항상 동물이에요. 세 번째 손님부터 <b>6명 중 1명</b>꼴로 동네 사람이 와요.</li>
-          <li>하루에 한 명(Day 9부터는 두 명)까지, 같은 사람은 하루에 한 번만 와요. 손님이 떠나면 보통 만족도 <b>-8</b>이에요.</li>
+          <li>하루에 한 명(Day 9부터는 두 명)까지, 같은 사람은 하루에 한 번만 와요. 동네 사람이 그냥 떠나면 만족도 <b>-15</b>예요 (나그네는 -20).</li>
         </ul>
         <div class="guest-people">
           <div class="guest"><img src="assets/sprites/courier.webp" alt="" loading="lazy"><div><h4>택배기사</h4><ul><li>1~2개 주문. 인내심이 보통 손님의 <b>40%</b>뿐이라 아주 급해요.</li><li>인내심이 60% 넘게 남았을 때 다 건네면 한 개에 <b>600원</b>씩 팁 (보통 손님은 200원).</li></ul></div></div>
-          <div class="guest"><img src="assets/sprites/principal.webp" alt="" loading="lazy"><div><h4>유치원 원장님</h4><ul><li><b>6~9개</b> 단체 주문 (Day 1은 70%, Day 2는 85%로 줄여서 와요).</li><li>인내심이 <b>2.5배</b>라 느긋해요.</li><li>다 건네면 단체 보너스 <b>3,000원</b> + 만족도 <b>+5</b>.</li></ul></div></div>
+          <div class="guest"><img src="assets/sprites/principal.webp" alt="" loading="lazy"><div><h4>유치원 원장님</h4><ul><li><b>6~9개</b> 단체 주문 (Day 1은 70%, Day 2는 85%로 줄여서 와요).</li><li>인내심이 <b>2.5배</b>라 느긋해요.</li><li>다 건네면 단체 보너스 <b>3,000원</b> + 만족도 <b>+3</b>.</li></ul></div></div>
           <div class="guest"><img src="assets/sprites/grandpa.webp" alt="" loading="lazy"><div><h4>동네 할아버지</h4><ul><li>2~3개 주문, 인내심 1.2배.</li><li>처음 온 날의 주문이 <b>단골 주문</b>이 돼요. 다음부터는 "늘 먹던 걸로"만 말하고 개수가 <b>?</b>로 가려져요.</li><li>한 번에 맞게 주면 팁 <b>2배</b> + 만족도 <b>+3</b>. 틀리면 주문을 다시 알려 줘요.</li></ul></div></div>
-          <div class="guest"><img src="assets/sprites/girl.webp" alt="" loading="lazy"><div><h4>초등학생 (여자아이)</h4><ul><li>1개 주문. 500원밖에 없어서 <b>500원</b>에 팔아요 (팁 없음).</li><li>대신 만족도 <b>+3</b>.</li></ul></div></div>
+          <div class="guest"><img src="assets/sprites/girl.webp" alt="" loading="lazy"><div><h4>초등학생 (여자아이)</h4><ul><li>1개 주문. 500원밖에 없어서 <b>500원</b>에 팔아요 (팁 없음).</li><li>대신 만족도 <b>+2</b>.</li></ul></div></div>
           <div class="guest"><img src="assets/sprites/boy.webp" alt="" loading="lazy"><div><h4>초등학생 (남자아이)</h4><ul><li>1~3개 주문.</li><li>받는 도중에 주문을 <b>한 번 바꿔요</b> (하나 더 달라거나, 남은 것의 종류를 바꾸거나). 말풍선을 잘 보세요!</li></ul></div></div>
           <div class="guest"><img src="assets/sprites/auntie.webp" alt="" loading="lazy"><div><h4>윤이 엄마</h4><ul><li>3~5개 주문, 단골이라 <b>30% 싸게</b> 팔아요.</li><li>기분 좋게 가면 동네에 소문을 내서 <b>30초 동안</b> 손님이 더 자주 와요.</li><li>한 번이라도 기분 좋게 다녀가면 윤이·현이가 보너스를 줘요.</li></ul></div></div>
           <div class="guest"><img src="assets/sprites/yuni.webp" alt="" loading="lazy"><div><h4>윤이</h4><ul><li>윤이 엄마의 둘째 아들. 4~6개 주문.</li><li>엄마가 기분 좋게 다녀간 적이 있으면 팁이 <b>1.5배</b>.</li></ul></div></div>
-          <div class="guest"><img src="assets/sprites/hyun.webp" alt="" loading="lazy"><div><h4>현이</h4><ul><li>윤이 엄마의 첫째 아들. 서울 수방사에서 근무해서 휴가를 자주 나와요.</li><li><b>5~8개</b> 주문, 휴가가 짧아 인내심 <b>80%</b>.</li><li>빨리 건네면 한 개에 <b>400원</b>씩 팁 + 만족도 <b>+5</b>. 엄마가 기분 좋게 다녀갔다면 <b>2,000원</b> 더.</li></ul></div></div>
+          <div class="guest"><img src="assets/sprites/hyun.webp" alt="" loading="lazy"><div><h4>현이</h4><ul><li>윤이 엄마의 첫째 아들. 서울 수방사에서 근무해서 휴가를 자주 나와요.</li><li><b>5~8개</b> 주문, 휴가가 짧아 인내심 <b>80%</b>.</li><li>빨리 건네면 한 개에 <b>400원</b>씩 팁 + 만족도 <b>+3</b>. 엄마가 기분 좋게 다녀갔다면 <b>2,000원</b> 더.</li></ul></div></div>
           <div class="guest"><img src="assets/sprites/beggar.webp" alt="" loading="lazy"><div><h4>배고픈 나그네</h4><ul><li>1~2개를 달라고 해요. <b>돈은 받지 못해요</b> (재료비만 들어요).</li><li>건네면 만족도 <b>+3</b>.</li><li>못 주고 떠나면 동네에 나쁜 소문이 나서 만족도 <b>-20</b>! 꼭 챙겨 주세요.</li></ul></div></div>
           <div class="guest"><img src="assets/sprites/landlord.webp" alt="" loading="lazy"><div><h4>건물주 아저씨</h4><ul><li>주문하지 않아요. 3초 동안 건물 자랑을 실컷 하고 <b>5,000~20,000원</b> 용돈만 주고 가요. 🍀</li><li>다른 특별 손님보다 <b>3배 드물게</b> 와요. 봉투를 눌러도 안 받아요.</li></ul></div></div>
           <div class="guest"><img src="assets/sprites/tourist.webp" alt="" loading="lazy"><div><h4>외국인 관광객</h4><ul><li>2~4개 주문, 영어로 말해요.</li><li>빨리 건네면 한 개에 <b>500원</b>씩 팁.</li></ul></div></div>
