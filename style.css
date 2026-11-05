@@ -489,6 +489,15 @@ img { -webkit-user-drag: none; }
   padding: 10px 4px;  /* 손가락으로 누르기 쉽게 */
   margin: -10px -4px;
 }
+.credit {
+  margin-top: -2px;
+  text-align: center;
+  font-family: var(--font-text);
+  font-size: 10.5px;
+  font-weight: 400;
+  color: #9a6a3a;
+}
+.credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; -webkit-user-select: text; user-select: text; }
 .history-list {
   max-height: 380px;
   overflow-y: auto;
