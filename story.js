@@ -25,8 +25,8 @@ const Story = (() => {
     { len: 84, arrive: [4.3, 5], patience: 28, need: [2, 4], conc: 3, cream: 0.45, mix: 0.3 },   // Day 11 (v1.5.16 조금 쉽게)
     { len: 90, arrive: [4, 4.8], patience: 27, need: [2, 4], conc: 3, cream: 0.45, mix: 0.35 },   // Day 12
     { len: 90, arrive: [3.8, 4.5], patience: 26, need: [2, 4], conc: 3, cream: 0.5, mix: 0.35 },   // Day 13
-    { len: 90, arrive: [3.5, 4.3], patience: 25, need: [2, 4], conc: 3, cream: 0.5, mix: 0.4 },   // Day 14 (v1.5.17 조금 쉽게)
-    { len: 96, arrive: [3, 3.5], patience: 22, need: [2, 5], conc: 3, cream: 0.5, mix: 0.4 },
+    { len: 90, arrive: [3.3, 4.1], patience: 24, need: [2, 4], conc: 3, cream: 0.5, mix: 0.4 },   // Day 14 (v1.5.18 다시 조금 어렵게)
+    { len: 120, arrive: [2.7, 3.2], patience: 21, need: [2, 5], conc: 3, cream: 0.5, mix: 0.4 },   // Day 15: 길고 바쁘게, 절반쯤 산타, 그 뒤 마지막 러시 (v1.5.18)
   ];
   const LAST_DAY = 15;
 
@@ -309,7 +309,8 @@ const Story = (() => {
     today.served++;
     today.combo++;
     if (ratio > 0.7) today.fast++;
-    if (today.combo % SAT.comboEvery === 0) setTimeout(() => toast(`🔥 ${today.combo}콤보! 만족도 보너스`), 650);
+    const combo = today.combo;   // 0.65초 뒤에는 장사가 끝나 today가 없을 수도 있다
+    if (combo % SAT.comboEvery === 0) setTimeout(() => toast(`🔥 ${combo}콤보! 만족도 보너스`), 650);
     if (allPerfect) today.perfect++;
     changeSat(satServeDelta(ratio, today.combo, allPerfect));
   }
@@ -731,6 +732,13 @@ const Story = (() => {
       leaveLine: '허허… 올해는 선물을 못 주겠구나…',
       thanks: '호호호! 올해 최고의 선물이구나! 자, 내 선물도 받게!' },
   };
+  // 마지막 러시 (v1.5.18): Day 15 산타가 떠난 뒤 남은 시간은 손님이 더 자주 오고(간격 ×0.7) 덜 기다린다(인내심 ×0.85)
+  const RUSH = { gap: 0.7, patience: 0.85 };
+  function startRush() {
+    if (!today || today.rush) return;
+    today.rush = true;
+    setTimeout(() => stageBanner('🔥 마지막 러시! 손님이 몰려와요'), 900);
+  }
   let buzzUntil = 0;   // 윤이 엄마가 소문을 내면 잠깐 손님이 더 자주 온다
   let forceSpecial = null;   // 시험용 (_debug.forceSpecial)
   function specialFor(day) {
@@ -739,7 +747,7 @@ const Story = (() => {
     // 매일 첫 번째·두 번째 손님은 동물 손님: 붕어빵을 미리 굽기 전에 급한 특별 손님이 오지 않게
     if (today.arrivals < 2) return null;
     // 산타: 마지막 날 장사가 35% 지나면 딱 한 번 (하루 인원 제한과 상관없이)
-    if (day === LAST_DAY && !today.santa && elapsed >= cfg.dayLength * 0.35) { today.santa = true; return 'santa'; }
+    if (day === LAST_DAY && !today.santa && elapsed >= cfg.dayLength * 0.5) { today.santa = true; return 'santa'; }   // 하루 절반쯤, 멘붕 직전에
     const max = day >= 9 ? 2 : 1;
     if (today.specials.length >= max) return null;
     const seen = new Set(today.specials.map((x) => x.id).concat(Q.map((e) => e.sp).filter(Boolean)));
@@ -794,7 +802,8 @@ const Story = (() => {
     tag.innerHTML = '<span></span><i><b></b></i>';
     queueEl.appendChild(el);
     queueEl.appendChild(tag);
-    const max = cfg.patience(progress()) * (sp && sp.patience ? sp.patience : 1);
+    const rush = today && today.rush ? RUSH.patience : 1;   // 마지막 러시
+    const max = cfg.patience(progress()) * (sp && sp.patience ? sp.patience : 1) * rush;
     const i = Q.length, slot = SLOTS[Math.min(i, 2)];
     let line = pickLine(def);
     // 할아버지: 단골 주문이 있으면 "늘 먹던 걸로" (개수는 숨긴다: 기억해야 한다)
@@ -937,6 +946,7 @@ const Story = (() => {
       else if (!e.wrongOnce) { tip = Math.max(tip, 200 * cnt) * 2; satBonus = 3; }          // 기억했다!
       else thanks = '허허, 다음엔 기억해 주게.';
     }
+    if (e.sp === 'santa') startRush();
     if (e.sp === 'auntie') { save.auntieMet = true; today.auntieHappy = true; buzzUntil = elapsed + 30; }
     if (e.sp === 'hyun') {
       save.hyunMet = true;
@@ -987,6 +997,7 @@ const Story = (() => {
     const sp = e.sp ? SPECIALS[e.sp] : null;
     if (Q[0] === e) setBubble(`<span style="color:#7a6a5a">${sp && sp.leaveLine ? sp.leaveLine : '너무 오래 기다려서 그냥 갈게요...'}</span>`);
     onMissed(sp && sp.leavePenalty, !!sp);
+    if (e.sp === 'santa') startRush();
     leave(e, false);
   }
 
@@ -1003,7 +1014,7 @@ const Story = (() => {
       if (arriveIn <= 0) {
         // 손님은 정해진 간격마다 온다. 그때 줄이 꽉 차 있으면 그 손님은 오지 않고, 다음 간격을 기다린다 (v1.5.10)
         if (Q.length < cap()) spawnQueued();
-        arriveIn = cfg.gap() * (elapsed < buzzUntil ? 0.6 : 1);
+        arriveIn = cfg.gap() * (elapsed < buzzUntil ? 0.6 : 1) * (today && today.rush ? RUSH.gap : 1);
       }
     }
     // 앞 손님이 떠난 자리로 다음 손님이 걸어 나오면 그 손님 말풍선을 띄운다
