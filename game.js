@@ -30,6 +30,10 @@ const CHALLENGE = {
   gap: () => randIn(chStage(progress()).gap),       // 손님이 떠나고 다음 손님이 올 때까지
   tipEach: (p) => chStage(p).tip,                   // 인내심이 60% 넘게 남았을 때 한 개당 팁
   stages: true,
+  challenge: true,
+  // 스토리 모드와 같은 줄 서기. 줄 길이: 0~20초 1명 → 20초~1분 2명 → 2단계 3명 → 3단계 5명
+  queue: true,
+  capacity: (t) => (t < 20 ? 1 : t < 60 ? 2 : t < 120 ? 3 : 5),
   firstGap: 1.2,
   variant: 'bean',                                  // 랭킹 이름: 3분 챌린지 팥
 };
@@ -720,6 +724,7 @@ function startChallenge(variant = challengeVariant) {
   mode = 'challenge';
   cfg = variant === 'mix' ? CHALLENGE_MIX : CHALLENGE;
   startDay(0);
+  Story.beginChallenge();
 }
 
 // startMoney: 장사를 시작할 때 가진 돈 (3분 챌린지는 0, 스토리는 그날 아침 돈)
@@ -781,6 +786,7 @@ function endDay() {
     loadBgm(nextGameTrack);
     return Story.endDay();
   }
+  Story.endChallenge();
   // 마감 소리가 끝나면 정산 화면에 시작 화면 음악을 처음부터 깔아 준다
   setTimeout(() => { if (!running && currentBgm === null) playBgm('title', true); }, 1200);
   nextGameTrack = pickGameTrack(nextGameTrack);
@@ -872,7 +878,7 @@ function update(dt) {
       setMold(m, 'burnt');
       stats.burnt++;
       play('burn', 0.6);
-      if (mode === 'story') Story.onBurnt();
+      if (mode === 'story' || cfg.queue) Story.onBurnt();   // 줄 서기를 쓰면 콤보·만족도는 story.js가 맡는다
       else { chCombo = 0; chChange(SAT.burn); }
     }
   });
