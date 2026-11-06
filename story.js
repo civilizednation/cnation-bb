@@ -36,8 +36,8 @@ const Story = (() => {
     '눈 내리는 골목에 작은 붕어빵 가게를 열었다. 오늘은 첫날, 천천히 해 보자!',
     '어제 왔던 손님이 친구를 데려왔다! 손님이 늘 것 같아 철판을 바꿨다. 이제 틀이 6개다.',
     '동네 아이들이 학교 끝나고 들르기 시작했다.',
-    '"슈크림 붕어빵은 없어요?" 손님 말에 슈크림을 준비했다!',
-    '동네 철물점 아저씨가 큰 철판을 달아 주셨다. 틀이 9개가 됐다!',
+    '"슈크림 붕어빵은 없어요?" 손님 말에 슈크림을 준비했다! 철물점 아저씨가 큰 철판도 달아 주셔서 틀이 9개가 됐다!',
+    '큰 철판에 손이 익어 간다. 오늘도 힘내 보자!',
     '옆 골목에서도 우리 가게 이야기를 한다는데…?',
     '주말이다! 아침부터 손님들이 줄을 섰다.',
     '"팥이랑 슈크림 섞어서 주세요!" 주문이 점점 까다로워진다.',
@@ -50,9 +50,9 @@ const Story = (() => {
     '보름의 마지막 날. 골목에 산타 할아버지가 나타났다는 소문이…! 오늘을 최고의 하루로 만들자!',
   ];
 
-  // 틀은 상점이 아니라 날짜에 따라 늘어난다: Day 1 4칸, Day 2 6칸, Day 5 9칸
+  // 틀은 상점이 아니라 날짜에 따라 늘어난다: Day 1 4칸, Day 2 6칸, Day 4 9칸 (슈크림이 나오는 날, v1.5.13)
   function moldsFor(day) {
-    if (day >= 5) return ALL_MOLDS;
+    if (day >= 4) return ALL_MOLDS;
     if (day >= 2) return [0, 1, 2, 3, 4, 5];
     return [0, 1, 3, 4];
   }
@@ -271,7 +271,7 @@ const Story = (() => {
     $s('intro-day').textContent = `Day ${day}`;
     $s('intro-text').textContent = STORY[day];
     const extra = [];
-    if (day === 2 || day === 5) extra.push(`🔓 틀이 ${moldCount(day)}개로 늘었어요!`);
+    if (day === 2 || day === 4) extra.push(`🔓 틀이 ${moldCount(day)}개로 늘었어요!`);
     if (day === 4) extra.push('🍮 슈크림 메뉴 추가! 반죽 위에 슈크림을 올려 구워요. 슈크림 붕어빵은 200원 더 받아요.');
     if (day === 8) extra.push('📝 이제 팥과 슈크림을 섞어 시키는 손님도 와요.');
     if (DAYS[day].conc > (DAYS[day - 1]?.conc || 1)) extra.push(`👥 손님이 ${DAYS[day].conc}명까지 줄을 서요.`);
@@ -290,7 +290,7 @@ const Story = (() => {
     startDay(save.money);
     clearQueue();
     // 새로 열린 틀은 반짝 연출
-    if (day === 2 || day === 5) molds.forEach((m, i) => {
+    if (day === 2 || day === 4) molds.forEach((m, i) => {
       if (cfg.molds.includes(i) && !before.includes(i)) {
         m.el.classList.remove('unlocking'); void m.el.offsetWidth; m.el.classList.add('unlocking');
       }
@@ -1131,7 +1131,7 @@ const Story = (() => {
     day: () => (today ? today.day : save ? save.day : 1),
     lockedHint: () => {
       const day = today ? today.day : 1;
-      return day < 2 ? 'Day 2에 열리는 틀이에요' : 'Day 5에 열리는 틀이에요';
+      return day < 2 ? 'Day 2에 열리는 틀이에요' : 'Day 4에 열리는 틀이에요';
     },
     onServed, onMissed, onBurnt, renderHud, endDay, refreshTitle, showRanking, submitRank, beginChallenge, endChallenge,
     serve, updateQueue, renderQueue, frontNeeds,
