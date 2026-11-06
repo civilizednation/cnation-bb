@@ -475,10 +475,10 @@ const Story = (() => {
     const panel = document.querySelector('#ending .panel');
     cancelAnimationFrame(endScrollRaf);
     panel.scrollTop = 0;
-    // 기록이 모두 나타난 뒤(가장 늦게 나오는 줄의 지연 + 나타나는 0.5초) 3초를 더 기다렸다가 초당 28px
+    // 기록이 모두 나타난 뒤(가장 늦게 나오는 줄의 지연 + 나타나는 0.5초) 1.5초를 더 기다렸다가 초당 28px
     const lastShown = Math.max(0, ...[...panel.querySelectorAll('.end-rec, .end-chart, .end-chart-cap')]
       .map((el) => parseFloat(el.style.animationDelay) || 0)) + 0.5;
-    const DELAY = (lastShown + 3) * 1000, SPEED = 28;
+    const DELAY = (lastShown + 1.5) * 1000, SPEED = 28;
     let start = 0, stopped = false;
     const stop = () => { stopped = true; cancelAnimationFrame(endScrollRaf); };
     ['pointerdown', 'wheel', 'touchstart'].forEach((ev) => panel.addEventListener(ev, stop, { once: true, passive: true }));
