@@ -10,10 +10,11 @@ const ALL_MOLDS = [0, 1, 2, 3, 4, 5, 6, 7, 8];
 // 모드마다 하루 장사 규칙이 다르다. progress는 그날 장사의 진행도(0~1).
 // 3분 챌린지: 시간이 갈수록 빨리 익고(바빠지고) 손님은 덜 기다린다. 스토리 모드 설정은 story.js가 날짜별로 만든다.
 // 3분 챌린지는 1분마다 단계가 확 바뀐다 (아침 → 저녁 → 밤). 단계가 바뀔 때 화면에 크게 알린다
+// gap: 손님이 정해진 간격마다 온다(앞 손님 처리와 상관없음). 줄 서기에 맞춰 v1.5.12에 늘림
 const CH_STAGES = [
-  { msg: '', cook: 5.0, burn: 6.0, patience: 30, need: [1, 2], gap: [1.6, 2.8], tip: 200, bgm: 1 },
-  { msg: '🌇 2단계 · 저녁 손님이 몰려와요!', cook: 4.0, burn: 5.0, patience: 22, need: [1, 3], gap: [1.0, 1.8], tip: 300, bgm: 1.08 },
-  { msg: '🌙 3단계 · 밤 러시! 마지막 1분!', cook: 3.2, burn: 4.0, patience: 15, need: [2, 4], gap: [0.5, 1.0], tip: 400, bgm: 1.15 },
+  { msg: '', cook: 5.0, burn: 6.0, patience: 30, need: [1, 2], gap: [3.0, 4.0], tip: 200, bgm: 1 },
+  { msg: '🌇 2단계 · 저녁 손님이 몰려와요!', cook: 4.0, burn: 5.0, patience: 22, need: [1, 3], gap: [2.0, 3.0], tip: 300, bgm: 1.08 },
+  { msg: '🌙 3단계 · 밤 러시! 마지막 1분!', cook: 3.2, burn: 4.0, patience: 15, need: [2, 4], gap: [1.2, 1.8], tip: 400, bgm: 1.15 },
 ];
 const chStageIndex = (p) => Math.min(CH_STAGES.length - 1, Math.floor(p * CH_STAGES.length));
 const chStage = (p) => CH_STAGES[chStageIndex(p)];

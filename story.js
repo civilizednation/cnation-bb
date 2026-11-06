@@ -12,8 +12,8 @@ const Story = (() => {
   // cream: 한 종류만 시킬 때 슈크림일 확률, mix: 팥·슈크림을 섞어 시킬 확률 (기획안 2장)
   const DAYS = [
     null,
-    { len: 54, arrive: [7, 9], patience: 38, need: [1, 2], conc: 1, cream: 0, mix: 0 },
-    { len: 60, arrive: [5, 7], patience: 36, need: [1, 2], conc: 2, cream: 0, mix: 0 },
+    { len: 54, arrive: [6, 8], patience: 38, need: [1, 2], conc: 1, cream: 0, mix: 0 },
+    { len: 60, arrive: [4.8, 6.5], patience: 36, need: [1, 2], conc: 2, cream: 0, mix: 0 },
     { len: 66, arrive: [4.5, 6], patience: 34, need: [1, 3], conc: 2, cream: 0, mix: 0 },
     { len: 66, arrive: [5, 7], patience: 33, need: [1, 3], conc: 3, cream: 0.3, mix: 0 },
     { len: 72, arrive: [5, 6], patience: 32, need: [1, 3], conc: 3, cream: 0.4, mix: 0 },
