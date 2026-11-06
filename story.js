@@ -953,8 +953,7 @@ const Story = (() => {
     e.tag.classList.add('gone');
     leaving.push(e);
     if (i === 0) frontReadyAt = elapsed + FRONT_DELAY;   // 다음 손님이 한 칸 앞으로 걸어 나오는 동안
-    // 가게가 텅 비었을 때만 다음 손님을 조금 당긴다 (줄에 손님이 남아 있으면 원래 간격대로)
-    if (Q.length === 0) arriveIn = Math.min(arriveIn, 1 + Math.random());
+    // 손님이 떠나도 다음 손님 도착 시간은 바꾸지 않는다: 손님은 정해진 간격마다 온다 (빨리 건넸다고 당겨 오지 않음)
   }
   function leaveSad(e) {
     if (e.sp) { const rec = today.specials.find((x) => x.id === e.sp && x.ok === null); if (rec) rec.ok = false; }
@@ -970,7 +969,7 @@ const Story = (() => {
     if (elapsed < cfg.dayLength - 2) {
       arriveIn -= dt;
       if (arriveIn <= 0) {
-        // 줄이 꽉 차 있으면 다음 손님은 다시 한 간격 뒤에 온다 (자리가 나자마자 바로 채우지 않게, v1.5.10)
+        // 손님은 정해진 간격마다 온다. 그때 줄이 꽉 차 있으면 그 손님은 오지 않고, 다음 간격을 기다린다 (v1.5.10)
         if (Q.length < cap()) spawnQueued();
         arriveIn = cfg.gap() * (elapsed < buzzUntil ? 0.6 : 1);
       }
