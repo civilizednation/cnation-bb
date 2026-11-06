@@ -655,12 +655,14 @@ const Story = (() => {
     return Math.random() < cfg.creamRatio ? { bean: 0, cream: n } : { bean: n, cream: 0 };
   }
   function orderPhrase(o) {
+    if (o.any) return `아무거나 ${o.any}개`;   // 윤이 아빠
     if (o.bean && o.cream) return `팥 ${o.bean}개랑 슈크림 ${o.cream}개`;
     if (o.cream) return `슈크림 ${o.cream}개`;
     return cfg.cream ? `팥 ${o.bean}개` : `${o.bean}개`;
   }
   // 주문표: 뒤 손님은 주문 전체, 맨 앞 손님은 남은 개수 (다 받은 종류는 ✓)
   function countText(o, left) {
+    if (o.any) return `아무거나 ${left ? (left.any || '✓') : o.any}`;
     const parts = [];
     if (o.bean) parts.push(`팥${left ? (left.bean || '✓') : o.bean}`);
     if (o.cream) parts.push(`슈${left ? (left.cream || '✓') : o.cream}`);
@@ -716,6 +718,13 @@ const Story = (() => {
       lines: ['자기야 뭐 먹을래? 우리 {n}요~', '오늘 100일이에요! {n} 주세요~', '우리 자기가 붕어빵 좋아해서요. {n}요!', '하나씩 나눠 먹을 거예요~ {n}요!', '자기 손 시리지? 얼른 {n} 주세요~'],
       wrongLine: '헐… 우리 그거 안 시켰는데요?',
       thanks: '역시 여기가 우리 데이트 코스예요!' },
+    // 윤이 아빠: 윤이 엄마의 남편, 윤이·현이의 아빠. 이 게임을 만든 개발자(세상 긍정왕)
+    // 아무거나 5개(팥·슈크림 섞어도 됨, 잘못 건넴 없음), 인내심 2배, 늦어도 만족도가 깎이지 않음, 팁은 늘 한 개 200원
+    // 디버그 모드: 맨 앞에 서 있는 동안 뒤에 선 손님들의 시간이 멈춘다. 다른 동네 사람보다 2배 드물게 온다
+    dad: { name: '윤이 아빠', from: 1, any: 5, weight: 1 / 2, patience: 2, tipAlways: 200, positive: true, debugMode: true, leavePenalty: -15,
+      lines: ['오늘 코드가 한 번에 돌아갔어요! 기념으로 {n} 주세요!', '팥이든 슈크림이든 다 맛있죠! 버그 없는 {n}요~', '천천히 하세요~ 제가 시간을 잠깐 멈춰 둘게요. {n}!', '이건 비밀인데… 사실 제가 이 게임 개발자예요~ {n} 주세요!', '세상은 아름다워요! 아무 걱정 마시고 {n} 주세요~'],
+      leaveLine: '…버그는 참아도 이건 못 참겠네요! 다음에 또 올게요.',
+      thanks: '완벽해요! 오늘도 모두 좋은 하루 보내세요~' },
     // 산타 할아버지: 마지막 날(Day 15)에만, 장사 중간쯤 딱 한 번 오는 보스. 큰 주문, 다 주면 10만 원 선물
     santa: { name: '산타 할아버지', from: 99, boss: true, need: [16, 20], patience: 3, bonus: 100000, satBonus: 5, leavePenalty: -15, happyImg: true, noSad: true,
       lines: ['호호호! 착한 아이들 선물로 {n} 부탁하네!', '썰매에 실을 붕어빵, {n} 준비해 주게!', '루돌프도 기다린다네. {n} 부탁하네!', '올해 마지막 선물은 붕어빵이야! {n}일세!', '전 세계 아이들이 기다린다네! {n} 부탁하네!'],
@@ -761,6 +770,7 @@ const Story = (() => {
     let order;
     if (spId === 'grandpa' && save.grandpaOrder) order = { ...save.grandpaOrder };
     else if (sp && sp.noOrder) order = { bean: 0, cream: 0 };
+    else if (sp && sp.any) order = { bean: 0, cream: 0, any: sp.any };   // 윤이 아빠: 날짜와 상관없이 항상 5개
     else if (sp) {
       // 동네 사람은 처음부터 모두 온다. 틀이 적은 초반(Day 1~2)에는 단체 주문을 조금 줄인다
       const n = sp.need[0] + Math.floor(Math.random() * (sp.need[1] - sp.need[0] + 1));
@@ -792,7 +802,7 @@ const Story = (() => {
     if (usual) line = sp.usual[Math.floor(Math.random() * sp.usual.length)];
     const e = { def, sp: spId, order, line, left: { ...order }, wait: max, max, state: 'in', t: 0, el, img, tag,
       x: -170, up: slot.up, s: slot.s, dim: slot.dim, perfect: true, dum: { bean: 0, cream: 0 }, restoreAt: 0,
-      hide: usual, wrongOnce: false };
+      hide: usual, wrongOnce: false, got: { bean: 0, cream: 0 } };
     if (spId === 'grandpa' && !save.grandpaOrder) save.grandpaOrder = { ...order };
     if (sp) { e.el.classList.add('special'); today.specials.push({ id: spId, name: sp.name, ok: null }); }
     Q.push(e);
@@ -809,6 +819,7 @@ const Story = (() => {
     nm.textContent = e.sp ? SPECIALS[e.sp].name : '';
     setBubble(lineHtml(e));
     bubblePopAt = performance.now();
+    if (e.sp && SPECIALS[e.sp].debugMode) stageBanner('⚡ 디버그 모드 ON · 뒤 손님 시간 정지!');
   }
 
   function takeBread(kind) {
@@ -840,6 +851,15 @@ const Story = (() => {
     }
     if (e.state !== 'wait') return;
     if (e.sp && SPECIALS[e.sp].noOrder) return hint('붕어빵은 안 드신대요');
+    if (e.left.any > 0) {
+      // 윤이 아빠: 어느 봉투든 한 개씩 (잘못 건넴 없음)
+      if (!takeBread(kind)) e.perfect = false;
+      e.left.any--;
+      e.got[kind]++;
+      play('collect', 0.5);
+      if (!e.left.any) complete(e);
+      return;
+    }
     if (e.left[kind] > 0) {
       if (!takeBread(kind)) e.perfect = false;
       e.left[kind]--;
@@ -895,9 +915,11 @@ const Story = (() => {
   function complete(e) {
     const sp = e.sp ? SPECIALS[e.sp] : null;
     const ratio = e.wait / e.max;
-    const cnt = e.order.bean + e.order.cream;
-    let tip = ratio > 0.6 ? (sp && sp.tipEach ? sp.tipEach : cfg.tipEach ? cfg.tipEach(progress()) : 200) * cnt : 0;
-    let sales = e.order.bean * cfg.price + e.order.cream * (cfg.price + CREAM_BONUS);
+    const anyOrder = !!e.order.any;
+    const cnt = anyOrder ? e.order.any : e.order.bean + e.order.cream;
+    let tip = sp && sp.tipAlways ? sp.tipAlways * cnt : ratio > 0.6 ? (sp && sp.tipEach ? sp.tipEach : cfg.tipEach ? cfg.tipEach(progress()) : 200) * cnt : 0;
+    const sold = anyOrder ? e.got : e.order;   // 윤이 아빠는 실제로 받은 종류대로 계산
+    let sales = sold.bean * cfg.price + sold.cream * (cfg.price + CREAM_BONUS);
     let extra = 0, satBonus = 0, thanks = sp && sp.thanks;
     if (sp && sp.discount) sales = Math.round(sales * (1 - sp.discount) / 10) * 10;      // 윤이 엄마: 30% 싸게
     if (sp && sp.fixedPrice) { sales = sp.fixedPrice; tip = 0; }                          // 꼬마: 500원
@@ -920,6 +942,7 @@ const Story = (() => {
       // 엄마와 윤이가 모두 기분 좋게 다녀갔다면 가족 대표로 감사 인사
       if (save.auntieHappy || today.auntieHappy) { extra += 2000; thanks = '엄마랑 윤이가 여기 얘기만 해요! 가족 대표로 감사 인사예요. 충성!'; }
     }
+    if (e.sp === 'dad' && (save.auntieHappy || today.auntieHappy)) { extra += 1000; thanks = '집사람이 여기 칭찬을 그렇게 하더라고요! 오늘도 완벽해요~'; }
     if (e.sp === 'yuni') save.yuniMet = true;
     if (e.sp === 'yuni') { if (today.auntieHappy || save.auntieHappy) tip = Math.round(Math.max(tip, 200 * cnt) * 1.5 / 10) * 10; else thanks = '감사합니다!'; }
     if (today.auntieHappy) save.auntieHappy = true;
@@ -937,9 +960,10 @@ const Story = (() => {
     e.t = 0;
     e.restoreAt = 0;
     setBubble(`<b>${thanks || THANKS[Math.floor(Math.random() * THANKS.length)]}</b>`);
-    if (!(sp && sp.noOrder)) onServed(ratio, e.perfect);   // 건물주는 판 게 아니라서 만족도·콤보와 상관없다
+    // 윤이 아빠는 늦게 받아도 만족도가 깎이지 않는다 (느림·겨우도 보통으로 친다)
+    if (!(sp && sp.noOrder)) onServed(sp && sp.positive ? Math.max(ratio, 0.36) : ratio, e.perfect);   // 건물주는 판 게 아니라서 만족도·콤보와 상관없다
     if (satBonus) changeSat(satBonus);
-    if (extra) setTimeout(() => toast(e.sp === 'santa' ? `🎅 산타의 선물 +${won(extra)}!` : `단체 보너스 +${won(extra)}!`), 700);
+    if (extra) setTimeout(() => toast(e.sp === 'santa' ? `🎅 산타의 선물 +${won(extra)}!` : e.sp === 'principal' ? `단체 보너스 +${won(extra)}!` : `가족 보너스 +${won(extra)}!`), 700);
   }
 
   function leave(e, happy) {
@@ -983,7 +1007,8 @@ const Story = (() => {
       if (e.state === 'wait') {
         // 뒤에 설수록 한 자리마다 앞사람의 절반 속도로 인내심이 준다 (1, 1/2, 1/4, 1/8 ...)
         // 맨 앞 손님은 말풍선이 뜬 뒤부터 원래 속도
-        const speed = i === 0 ? (bubbleOwner === e ? 1 : 0.5) : Math.pow(0.5, i);
+        const debug = Q[0] && Q[0].sp && SPECIALS[Q[0].sp].debugMode && bubbleOwner === Q[0] && Q[0].state === 'wait';
+        const speed = i === 0 ? (bubbleOwner === e ? 1 : 0.5) : debug ? 0 : Math.pow(0.5, i);   // 디버그 모드: 뒤 손님 시간 정지
         e.wait -= dt * speed;
         if (e.restoreAt && elapsed >= e.restoreAt) { e.restoreAt = 0; if (bubbleOwner === e) setBubble(lineHtml(e)); }
         if (i === 0 && bubbleOwner === e && e.sp && SPECIALS[e.sp].noOrder) { e.brag = (e.brag || 0) + dt; if (e.brag >= 3) { complete(e); return; } }
@@ -1000,6 +1025,7 @@ const Story = (() => {
   }
   function frontNeeds() {
     const e = Q[0];
+    if (e && e.state === 'wait' && bubbleOwner === e && e.left.any) return { bean: e.left.any, cream: e.left.any };   // 아무 봉투나
     return e && e.state === 'wait' && bubbleOwner === e ? e.left : { bean: 0, cream: 0 };
   }
 
@@ -1060,7 +1086,7 @@ const Story = (() => {
       if (i === 0 || i >= SLOTS.length || e.state === 'out') { setStyle(e.tag, 'display', 'none'); return; }
       setStyle(e.tag, 'display', '');
       const span = e.tag.firstChild, bar = e.tag.lastChild.firstChild;
-      const text = e.hide ? '?' : (e.order.bean + e.order.cream) ? countText(e.order) : '💰';
+      const text = e.hide ? '?' : (e.order.bean + e.order.cream + (e.order.any || 0)) ? countText(e.order) : '💰';
       if (span.textContent !== text) span.textContent = text;
       const r = Math.max(0, e.wait / e.max);
       setStyle(bar, 'transform', `scaleX(${r.toFixed(3)})`);
@@ -1095,7 +1121,7 @@ const Story = (() => {
       setStyle(fill, 'width', `${(r * 100).toFixed(1)}%`);
       setStyle(fill, 'background', r > 0.6 ? '#5dbb63' : r > 0.3 ? '#f5a623' : '#e74c3c');
       const chip = $('order-chip');
-      const ct = !(owner.order.bean + owner.order.cream) ? '💰'
+      const ct = !(owner.order.bean + owner.order.cream + (owner.order.any || 0)) ? '💰'
         : owner.hide && owner.state === 'wait' ? countText(owner.order, owner.left).replace(/\d+/g, '?') : countText(owner.order, owner.left);
       if (chip.textContent !== ct) chip.textContent = ct;
     }

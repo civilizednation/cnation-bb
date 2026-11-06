@@ -43,12 +43,14 @@ const CHALLENGE_MIX = Object.assign({}, CHALLENGE, { variant: 'mix', cream: true
 
 // 주문 {bean, cream}을 말로: "2개" / "팥 2개" / "슈크림 1개" / "팥 2개랑 슈크림 1개"
 function orderPhrase(o, withKind) {
+  if (o.any) return `아무거나 ${o.any}개`;   // 윤이 아빠: 종류 상관없이
   if (o.bean && o.cream) return `팥 ${o.bean}개랑 슈크림 ${o.cream}개`;
   if (o.cream) return `슈크림 ${o.cream}개`;
   return withKind ? `팥 ${o.bean}개` : `${o.bean}개`;
 }
 // 남은 개수 표시: "팥2 · 슈1", 다 받은 종류는 ✓ (hide: 개수를 숨기고 ?)
 function countText(o, left, hide) {
+  if (o.any) return `아무거나 ${left.any || '✓'}`;
   const parts = [];
   if (o.bean) parts.push(`팥${hide && left.bean ? '?' : left.bean || '✓'}`);
   if (o.cream) parts.push(`슈${hide && left.cream ? '?' : left.cream || '✓'}`);
@@ -600,7 +602,7 @@ CUSTOMERS.forEach((c) => [c.id, c.id + '-sad'].forEach((name) => {
   customerImgCache[name] = im;
 }));
 // 스토리 모드 특별 손님(사람) 그림도 미리 받아 둔다 (평소 / -sad 실망 / -happy 받고 기뻐함)
-['courier', 'principal', 'grandpa', 'girl', 'boy', 'auntie', 'yuni', 'hyun', 'couple', 'tourist']
+['courier', 'principal', 'grandpa', 'girl', 'boy', 'auntie', 'yuni', 'hyun', 'couple', 'tourist', 'dad']
   .flatMap((id) => [id, id + '-sad'])
   .concat(['beggar', 'beggar-happy', 'landlord', 'landlord-happy', 'santa', 'santa-happy'])
   .forEach((name) => {
