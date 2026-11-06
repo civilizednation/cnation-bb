@@ -300,6 +300,7 @@ const Story = (() => {
 
   // ── 장사 중 만족도 ──
   function changeSat(delta) {
+    if (cfg.challenge) return chChange(delta);   // 3분 챌린지 만족도는 game.js의 chSat
     if (!today) return;
     today.sat = satAdd(today.sat, delta);
     if (today.sat <= 0 && running) gameOver();
@@ -411,6 +412,16 @@ const Story = (() => {
   }
 
   let ending = null;          // 랭킹에 올릴 스토리 결과 (엔딩 또는 게임 오버)
+  // ── 3분 챌린지 줄 서기 (v1.5.9) ──
+  // 줄·봉투·덤·잘못 건넴 규칙은 스토리와 같은 코드를 쓴다. today는 그날 기록용 가벼운 객체
+  function beginChallenge() {
+    today = { challenge: true, day: 0, startMoney: 0, satStart: SAT.start, sat: SAT.start,
+      combo: 0, fast: 0, served: 0, left: 0, burnt: 0, perfect: 0, dum: 0, wrong: 0, specials: [], arrivals: 0, auntieHappy: false };
+    buzzUntil = 0;
+    clearQueue();
+  }
+  function endChallenge() { clearQueue(); today = null; }
+
   // ── 게임 오버 ──
   // 그날 다시 하기는 없다(v1.5.4): 게임 오버가 되면 스토리가 끝나고, 그때까지 모은 돈으로 랭킹에 올릴 수 있다
   function gameOver() {
@@ -586,8 +597,9 @@ const Story = (() => {
   // 화면 배치는 시안 C2 (docs/mockups/queue-final.webp): 뒤로 갈수록 작고 어둡고 조금 위(계단식).
   const SLOTS = [
     { x: 72, up: 0, s: 1, dim: 1 },          // 맨 앞
-    { x: 20, up: 10, s: 0.84, dim: 0.8 },    // 2번째
-    { x: -26, up: 20, s: 0.70, dim: 0.66 },  // 3번째 (4번째부터는 그리지 않고 "+N")
+    // 손님 그림은 허리 아래가 잘린 반신이라, 밑단을 모두 계산대(z-index 더 위)에 붙여서 잘린 부분을 가린다 (v1.5.9)
+    { x: 20, up: 0, s: 0.84, dim: 0.8 },     // 2번째
+    { x: -26, up: 0, s: 0.70, dim: 0.66 },   // 3번째 (4번째부터는 그리지 않고 "+N")
   ];
   const BOX = 145, COUNTER = 262, TAG_TOP = 70;
   const THANKS_WAIT = 0.6;      // 다 받은 손님이 "고마워요!" 하고 떠나기까지 (이 사이에 더 주면 덤)
@@ -609,6 +621,8 @@ const Story = (() => {
   let bubblePopAt = -1;
   let lastRender = 0;
 
+  // 줄 길이: 스토리는 날마다 정해진 숫자, 3분 챌린지는 시간에 따라 바뀐다 (cfg.capacity가 함수)
+  const cap = () => (typeof cfg.capacity === 'function' ? cfg.capacity(elapsed) : cfg.capacity);
   function clearQueue() {
     Q.concat(leaving).forEach((e) => { e.el.remove(); e.tag.remove(); });
     Q = []; leaving = [];
@@ -708,7 +722,7 @@ const Story = (() => {
   let buzzUntil = 0;   // 윤이 엄마가 소문을 내면 잠깐 손님이 더 자주 온다
   let forceSpecial = null;   // 시험용 (_debug.forceSpecial)
   function specialFor(day) {
-    if (!today) return null;
+    if (!today || cfg.challenge) return null;   // 3분 챌린지는 동물 손님만
     if (forceSpecial) { const f = forceSpecial; forceSpecial = null; return f; }
     // 매일 첫 번째·두 번째 손님은 동물 손님: 붕어빵을 미리 굽기 전에 급한 특별 손님이 오지 않게
     if (today.arrivals < 2) return null;
@@ -879,7 +893,7 @@ const Story = (() => {
     const sp = e.sp ? SPECIALS[e.sp] : null;
     const ratio = e.wait / e.max;
     const cnt = e.order.bean + e.order.cream;
-    let tip = ratio > 0.6 ? (sp && sp.tipEach ? sp.tipEach : 200) * cnt : 0;
+    let tip = ratio > 0.6 ? (sp && sp.tipEach ? sp.tipEach : cfg.tipEach ? cfg.tipEach(progress()) : 200) * cnt : 0;
     let sales = e.order.bean * cfg.price + e.order.cream * (cfg.price + CREAM_BONUS);
     let extra = 0, satBonus = 0, thanks = sp && sp.thanks;
     if (sp && sp.discount) sales = Math.round(sales * (1 - sp.discount) / 10) * 10;      // 윤이 엄마: 30% 싸게
@@ -936,7 +950,7 @@ const Story = (() => {
     e.tag.classList.add('gone');
     leaving.push(e);
     if (i === 0) frontReadyAt = elapsed + FRONT_DELAY;   // 다음 손님이 한 칸 앞으로 걸어 나오는 동안
-    if (Q.length < cfg.capacity) arriveIn = Math.min(arriveIn, 1 + Math.random());
+    if (Q.length < cap()) arriveIn = Math.min(arriveIn, 1 + Math.random());
   }
   function leaveSad(e) {
     if (e.sp) { const rec = today.specials.find((x) => x.id === e.sp && x.ok === null); if (rec) rec.ok = false; }
@@ -952,7 +966,7 @@ const Story = (() => {
     if (elapsed < cfg.dayLength - 2) {
       arriveIn -= dt;
       if (arriveIn <= 0) {
-        if (Q.length < cfg.capacity) { spawnQueued(); arriveIn = cfg.gap() * (elapsed < buzzUntil ? 0.6 : 1); }
+        if (Q.length < cap()) { spawnQueued(); arriveIn = cfg.gap() * (elapsed < buzzUntil ? 0.6 : 1); }
         else arriveIn = 0.5;
       }
     }
@@ -1116,7 +1130,7 @@ const Story = (() => {
       const day = today ? today.day : 1;
       return day < 2 ? 'Day 2에 열리는 틀이에요' : 'Day 5에 열리는 틀이에요';
     },
-    onServed, onMissed, onBurnt, renderHud, endDay, refreshTitle, showRanking, submitRank,
+    onServed, onMissed, onBurnt, renderHud, endDay, refreshTitle, showRanking, submitRank, beginChallenge, endChallenge,
     serve, updateQueue, renderQueue, frontNeeds,
     // 테스트·밸런스 확인용
     _debug: { set forceSpecial(v) { forceSpecial = v; }, spawnQueued: () => spawnQueued(), DAYS, UPGRADES, get Q() { return Q; }, get save() { return save; }, set save(v) { save = v; }, get today() { return today; }, persist, buildCfg, beginNew, beginDay, buy, showIntro },
