@@ -1040,12 +1040,20 @@ function render() {
 }
 
 let last = performance.now();
+// 다음 프레임을 먼저 예약한다: 한 프레임에서 오류가 나도 게임이 그대로 멈추지 않게.
+// story.js는 game.js 다음에 읽히는데, 연결이 느리거나 파일을 컴퓨터에서 바로 열면 그 사이에 프레임이 돌 수 있다(v1.5.13)
+let frameErrors = 0;
 function frame(now) {
+  requestAnimationFrame(frame);
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
-  if (running && !paused && !document.hidden) update(dt);
-  render();
-  requestAnimationFrame(frame);
+  if (typeof Story === 'undefined') return;   // 스토리 코드를 아직 못 읽었다
+  try {
+    if (running && !paused && !document.hidden) update(dt);
+    render();
+  } catch (err) {
+    if (frameErrors++ < 3) console.error(err);   // 같은 오류로 콘솔이 넘치지 않게
+  }
 }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
