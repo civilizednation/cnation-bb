@@ -448,7 +448,6 @@ $('ch-close').addEventListener('click', () => showTitle());
 $('ch-rank').addEventListener('click', () => Story.showRanking('bean'));
 $('rank-btn').addEventListener('click', () => Story.showRanking('story'));
 $('r-save').addEventListener('click', () => { $('r-save').disabled = true; saveChallengeRank(); });
-$('again-btn').addEventListener('click', () => startChallenge());
 $('help-btn').addEventListener('click', () => $('help').classList.remove('hidden'));
 $('help-close').addEventListener('click', () => $('help').classList.add('hidden'));
 $('history-btn').addEventListener('click', () => $('history').classList.remove('hidden'));
@@ -461,6 +460,7 @@ $('history-list').innerHTML = CHANGELOG.map((r) => `
     <h3>v${r.version}<small>${r.date}</small></h3>
     <ul>${r.notes.map((n) => `<li>${n}</li>`).join('')}</ul>
   </div>`).join('');
+$('again-btn').addEventListener('click', () => startChallenge());   // 같은 판(팥 / 팥 & 슈크림)으로 한 번 더
 $('home-btn').addEventListener('click', () => showTitle());
 
 // ───────────────────────── 게임 상태 ─────────────────────────
