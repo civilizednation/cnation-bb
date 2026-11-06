@@ -25,7 +25,7 @@ const Story = (() => {
     { len: 84, arrive: [4.3, 5], patience: 28, need: [2, 4], conc: 3, cream: 0.45, mix: 0.3 },   // Day 11 (v1.5.16 조금 쉽게)
     { len: 90, arrive: [4, 4.8], patience: 27, need: [2, 4], conc: 3, cream: 0.45, mix: 0.35 },   // Day 12
     { len: 90, arrive: [3.8, 4.5], patience: 26, need: [2, 4], conc: 3, cream: 0.5, mix: 0.35 },   // Day 13
-    { len: 90, arrive: [3, 4], patience: 23, need: [2, 5], conc: 3, cream: 0.5, mix: 0.4 },
+    { len: 90, arrive: [3.5, 4.3], patience: 25, need: [2, 4], conc: 3, cream: 0.5, mix: 0.4 },   // Day 14 (v1.5.17 조금 쉽게)
     { len: 96, arrive: [3, 3.5], patience: 22, need: [2, 5], conc: 3, cream: 0.5, mix: 0.4 },
   ];
   const LAST_DAY = 15;
@@ -726,7 +726,7 @@ const Story = (() => {
       leaveLine: '…버그는 참아도 이건 못 참겠네요! 다음에 또 올게요.',
       thanks: '완벽해요! 오늘도 모두 좋은 하루 보내세요~' },
     // 산타 할아버지: 마지막 날(Day 15)에만, 장사 중간쯤 딱 한 번 오는 보스. 큰 주문, 다 주면 10만 원 선물
-    santa: { name: '산타 할아버지', from: 99, boss: true, need: [16, 20], patience: 3, bonus: 100000, satBonus: 5, leavePenalty: -15, happyImg: true, noSad: true,
+    santa: { name: '산타 할아버지', from: 99, boss: true, need: [12, 14], patience: 3, timeStop: true, bonus: 100000, satBonus: 5, leavePenalty: -15, happyImg: true, noSad: true,
       lines: ['호호호! 착한 아이들 선물로 {n} 부탁하네!', '썰매에 실을 붕어빵, {n} 준비해 주게!', '루돌프도 기다린다네. {n} 부탁하네!', '올해 마지막 선물은 붕어빵이야! {n}일세!', '전 세계 아이들이 기다린다네! {n} 부탁하네!'],
       leaveLine: '허허… 올해는 선물을 못 주겠구나…',
       thanks: '호호호! 올해 최고의 선물이구나! 자, 내 선물도 받게!' },
@@ -820,6 +820,7 @@ const Story = (() => {
     setBubble(lineHtml(e));
     bubblePopAt = performance.now();
     if (e.sp && SPECIALS[e.sp].debugMode) stageBanner('⚡ 디버그 모드 ON · 뒤 손님 시간 정지!');
+    if (e.sp && SPECIALS[e.sp].timeStop) stageBanner('🎄 산타의 마법! 다른 손님들의 시간이 멈춰요');
   }
 
   function takeBread(kind) {
@@ -989,8 +990,15 @@ const Story = (() => {
     leave(e, false);
   }
 
+  // 산타의 마법 (v1.5.17): 산타가 맨 앞에서 주문하는 동안 뒤 손님 인내심·새 손님·남은 장사 시간이 모두 멈춘다
+  function santaFront() {
+    const f = Q[0];
+    return !!(f && f.sp && SPECIALS[f.sp].timeStop && bubbleOwner === f && f.state === 'wait');
+  }
   function updateQueue(dt) {
-    if (elapsed < cfg.dayLength - 2) {
+    const frozen = santaFront();
+    if (frozen) cfg.dayLength += dt;   // 남은 장사 시간(시계)이 줄지 않게 그만큼 장사를 늘린다
+    if (!frozen && elapsed < cfg.dayLength - 2) {
       arriveIn -= dt;
       if (arriveIn <= 0) {
         // 손님은 정해진 간격마다 온다. 그때 줄이 꽉 차 있으면 그 손님은 오지 않고, 다음 간격을 기다린다 (v1.5.10)
@@ -1007,7 +1015,7 @@ const Story = (() => {
       if (e.state === 'wait') {
         // 뒤에 설수록 한 자리마다 앞사람의 절반 속도로 인내심이 준다 (1, 1/2, 1/4, 1/8 ...)
         // 맨 앞 손님은 말풍선이 뜬 뒤부터 원래 속도
-        const debug = Q[0] && Q[0].sp && SPECIALS[Q[0].sp].debugMode && bubbleOwner === Q[0] && Q[0].state === 'wait';
+        const debug = Q[0] && Q[0].sp && (SPECIALS[Q[0].sp].debugMode || SPECIALS[Q[0].sp].timeStop) && bubbleOwner === Q[0] && Q[0].state === 'wait';
         const speed = i === 0 ? (bubbleOwner === e ? 1 : 0.5) : debug ? 0 : Math.pow(0.5, i);   // 디버그 모드: 뒤 손님 시간 정지
         e.wait -= dt * speed;
         if (e.restoreAt && elapsed >= e.restoreAt) { e.restoreAt = 0; if (bubbleOwner === e) setBubble(lineHtml(e)); }
