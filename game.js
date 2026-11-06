@@ -264,7 +264,9 @@ const CUSTOMERS = [
 // 그 손님의 대사 하나를 고른다 (바로 전에 한 대사는 빼고)
 const lastLine = {};
 function pickLine(def) {
-  const pool = def.lines.filter((l) => l !== lastLine[def.id]);
+  // 바로 전 대사는 빼고 고른다. 대사가 하나뿐이면(할아버지 첫 방문 등) 그 대사를 그대로 쓴다 (v1.5.15)
+  let pool = def.lines.filter((l) => l !== lastLine[def.id]);
+  if (!pool.length) pool = def.lines;
   const line = pool[Math.floor(Math.random() * pool.length)];
   lastLine[def.id] = line;
   return line;
