@@ -50,7 +50,7 @@ const Story = (() => {
     '보름의 마지막 날. 골목에 산타 할아버지가 나타났다는 소문이…! 오늘을 최고의 하루로 만들자!',
   ];
 
-  // 틀은 상점이 아니라 날짜에 따라 늘어난다: Day 1 4칸, Day 2 6칸, Day 4 9칸 (슈크림이 나오는 날, v1.5.13)
+  // 틀은 상점이 아니라 날짜에 따라 늘어난다: Day 1 4칸, Day 2 6칸, Day 4 9칸 (슈크림이 나오는 날, v1.5.9)
   function moldsFor(day) {
     if (day >= 4) return ALL_MOLDS;
     if (day >= 2) return [0, 1, 2, 3, 4, 5];
@@ -412,7 +412,7 @@ const Story = (() => {
   }
 
   let ending = null;          // 랭킹에 올릴 스토리 결과 (엔딩 또는 게임 오버)
-  // ── 3분 챌린지 줄 서기 (v1.5.9) ──
+  // ── 3분 챌린지 줄 서기 (v1.5.8) ──
   // 줄·봉투·덤·잘못 건넴 규칙은 스토리와 같은 코드를 쓴다. today는 그날 기록용 가벼운 객체
   function beginChallenge() {
     today = { challenge: true, day: 0, startMoney: 0, satStart: SAT.start, sat: SAT.start,
@@ -600,7 +600,7 @@ const Story = (() => {
   // 화면 배치는 시안 C2 (docs/mockups/queue-final.webp): 뒤로 갈수록 작고 어둡고 조금 위(계단식).
   const SLOTS = [
     { x: 72, up: 0, s: 1, dim: 1 },          // 맨 앞
-    // 손님 그림은 허리 아래가 잘린 반신이라, 밑단을 모두 계산대(z-index 더 위)에 붙여서 잘린 부분을 가린다 (v1.5.9)
+    // 손님 그림은 허리 아래가 잘린 반신이라, 밑단을 모두 계산대(z-index 더 위)에 붙여서 잘린 부분을 가린다 (v1.5.8)
     { x: 20, up: 0, s: 0.84, dim: 0.8 },     // 2번째
     { x: -26, up: 0, s: 0.70, dim: 0.66 },   // 3번째 (4번째부터는 그리지 않고 "+N")
   ];
