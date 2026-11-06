@@ -16,15 +16,15 @@ const Story = (() => {
     { len: 60, arrive: [4.8, 6.5], patience: 36, need: [1, 2], conc: 2, cream: 0, mix: 0 },
     { len: 66, arrive: [4.5, 6], patience: 34, need: [1, 3], conc: 2, cream: 0, mix: 0 },
     { len: 66, arrive: [5, 7], patience: 33, need: [1, 3], conc: 3, cream: 0.3, mix: 0 },
-    { len: 72, arrive: [5, 6], patience: 32, need: [1, 3], conc: 3, cream: 0.4, mix: 0 },
-    { len: 72, arrive: [5, 6], patience: 31, need: [1, 3], conc: 3, cream: 0.4, mix: 0 },
-    { len: 78, arrive: [4.5, 5.5], patience: 30, need: [1, 3], conc: 3, cream: 0.5, mix: 0 },
+    { len: 72, arrive: [4.5, 5.5], patience: 30, need: [1, 3], conc: 3, cream: 0.4, mix: 0 },   // Day 5 (v1.5.16 조금 어렵게)
+    { len: 72, arrive: [4.3, 5.3], patience: 29, need: [1, 3], conc: 3, cream: 0.4, mix: 0 },   // Day 6
+    { len: 78, arrive: [4, 5], patience: 28, need: [1, 4], conc: 3, cream: 0.5, mix: 0 },   // Day 7
     { len: 78, arrive: [4.5, 5.5], patience: 29, need: [1, 4], conc: 3, cream: 0.4, mix: 0.2 },
     { len: 84, arrive: [4, 5], patience: 28, need: [1, 4], conc: 3, cream: 0.4, mix: 0.25 },
     { len: 84, arrive: [4, 5], patience: 27, need: [2, 4], conc: 3, cream: 0.4, mix: 0.3 },
-    { len: 84, arrive: [4, 4.5], patience: 26, need: [2, 4], conc: 3, cream: 0.45, mix: 0.3 },
-    { len: 90, arrive: [3.5, 4.5], patience: 25, need: [2, 4], conc: 3, cream: 0.45, mix: 0.35 },
-    { len: 90, arrive: [3.5, 4], patience: 24, need: [2, 5], conc: 3, cream: 0.5, mix: 0.35 },
+    { len: 84, arrive: [4.3, 5], patience: 28, need: [2, 4], conc: 3, cream: 0.45, mix: 0.3 },   // Day 11 (v1.5.16 조금 쉽게)
+    { len: 90, arrive: [4, 4.8], patience: 27, need: [2, 4], conc: 3, cream: 0.45, mix: 0.35 },   // Day 12
+    { len: 90, arrive: [3.8, 4.5], patience: 26, need: [2, 4], conc: 3, cream: 0.5, mix: 0.35 },   // Day 13
     { len: 90, arrive: [3, 4], patience: 23, need: [2, 5], conc: 3, cream: 0.5, mix: 0.4 },
     { len: 96, arrive: [3, 3.5], patience: 22, need: [2, 5], conc: 3, cream: 0.5, mix: 0.4 },
   ];
