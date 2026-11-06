@@ -4,7 +4,7 @@
 
 게임 이름은 어디서나 **"cnation 붕어빵 타이쿤"**으로 씁니다. 홈 화면 아이콘 이름만 **"cnation 붕어빵"**입니다(`index.html`의 `apple-mobile-web-app-title`, `manifest.webmanifest`의 `short_name`).
 
-빌드 없는 정적 웹 게임입니다(`index.html` · `style.css` · `game.js` · `version.js`). 로컬 확인은 `python3 -m http.server`로 합니다.
+빌드 없는 정적 웹 게임입니다(`index.html` · `style.css` · `game.js` · `version.js`). 로컬 확인은 `python3 -m http.server`로 합니다. 윈도우에서는 `로컬실행.bat`을 더블클릭하면 서버를 띄우고 브라우저로 엽니다(index.html을 바로 열면 `file://`이라 브라우저가 woff2 글씨체·음악 fetch를 막아서 화면이 달라짐).
 
 ## 버전 규칙 (꼭 지키기)
 
