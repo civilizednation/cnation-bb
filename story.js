@@ -953,7 +953,8 @@ const Story = (() => {
     e.tag.classList.add('gone');
     leaving.push(e);
     if (i === 0) frontReadyAt = elapsed + FRONT_DELAY;   // 다음 손님이 한 칸 앞으로 걸어 나오는 동안
-    if (Q.length < cap()) arriveIn = Math.min(arriveIn, 1 + Math.random());
+    // 가게가 텅 비었을 때만 다음 손님을 조금 당긴다 (줄에 손님이 남아 있으면 원래 간격대로)
+    if (Q.length === 0) arriveIn = Math.min(arriveIn, 1 + Math.random());
   }
   function leaveSad(e) {
     if (e.sp) { const rec = today.specials.find((x) => x.id === e.sp && x.ok === null); if (rec) rec.ok = false; }
@@ -969,8 +970,9 @@ const Story = (() => {
     if (elapsed < cfg.dayLength - 2) {
       arriveIn -= dt;
       if (arriveIn <= 0) {
-        if (Q.length < cap()) { spawnQueued(); arriveIn = cfg.gap() * (elapsed < buzzUntil ? 0.6 : 1); }
-        else arriveIn = 0.5;
+        // 줄이 꽉 차 있으면 다음 손님은 다시 한 간격 뒤에 온다 (자리가 나자마자 바로 채우지 않게, v1.5.10)
+        if (Q.length < cap()) spawnQueued();
+        arriveIn = cfg.gap() * (elapsed < buzzUntil ? 0.6 : 1);
       }
     }
     // 앞 손님이 떠난 자리로 다음 손님이 걸어 나오면 그 손님 말풍선을 띄운다
