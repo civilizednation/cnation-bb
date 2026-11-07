@@ -44,6 +44,7 @@ const CHALLENGE_MIX = Object.assign({}, CHALLENGE, { variant: 'mix', cream: true
 
 // 주문 {bean, cream}을 말로: "2개" / "팥 2개" / "슈크림 1개" / "팥 2개랑 슈크림 1개"
 function orderPhrase(o, withKind) {
+  if (LANG === 'en') return enOrder(o, withKind);
   if (o.any) return `아무거나 ${o.any}개`;   // 윤이 아빠: 종류 상관없이
   if (o.bean && o.cream) return `팥 ${o.bean}개랑 슈크림 ${o.cream}개`;
   if (o.cream) return `슈크림 ${o.cream}개`;
@@ -51,6 +52,7 @@ function orderPhrase(o, withKind) {
 }
 // 남은 개수 표시: "팥2 · 슈1", 다 받은 종류는 ✓ (hide: 개수를 숨기고 ?)
 function countText(o, left, hide) {
+  if (LANG === 'en') return enCount(o, left, hide);
   if (o.any) return `아무거나 ${left.any || '✓'}`;
   const parts = [];
   if (o.bean) parts.push(`팥${hide && left.bean ? '?' : left.bean || '✓'}`);
@@ -261,6 +263,7 @@ const CUSTOMERS = [
     '나무 위에서 냄새 맡고 왔어요. {n}요!',
   ] },
 ];
+if (LANG === 'en') CUSTOMERS.forEach((c) => { if (EN_LINES[c.id]) c.lines = EN_LINES[c.id]; });   // 영어 대사 (i18n.js)
 // 그 손님의 대사 하나를 고른다 (바로 전에 한 대사는 빼고)
 const lastLine = {};
 function pickLine(def) {
@@ -271,7 +274,7 @@ function pickLine(def) {
   lastLine[def.id] = line;
   return line;
 }
-const THANKS = ['와! 따끈따끈해서 최고예요!', '고마워요, 또 올게요!', '냄새부터 맛있네요~', '이 집 붕어빵이 최고야!'];
+const THANKS = ['와! 따끈따끈해서 최고예요!', '고마워요, 또 올게요!', '냄새부터 맛있네요~', '이 집 붕어빵이 최고야!'].map(tr);
 
 // ───────────────────────── 화면 크기 맞추기 ─────────────────────────
 const stage = document.getElementById('stage');
@@ -452,6 +455,12 @@ $('rank-btn').addEventListener('click', () => Story.showRanking('story'));
 $('r-save').addEventListener('click', () => { $('r-save').disabled = true; saveChallengeRank(); });
 $('help-btn').addEventListener('click', () => $('help').classList.remove('hidden'));
 $('help-close').addEventListener('click', () => $('help').classList.add('hidden'));
+// 언어 바꾸기: 기기에 저장하고 새로 불러온다 (i18n.js)
+$('lang-btn').textContent = LANG === 'en' ? '한' : 'EN';
+$('lang-btn').addEventListener('click', () => {
+  try { localStorage.setItem('cnation-bb-lang', LANG === 'en' ? 'ko' : 'en'); } catch { /* 무시 */ }
+  location.reload();
+});
 $('history-btn').addEventListener('click', () => $('history').classList.remove('hidden'));
 $('history-close').addEventListener('click', () => $('history').classList.add('hidden'));
 
@@ -977,7 +986,7 @@ function render() {
     if (tag && m.tag.textContent !== tag) m.tag.textContent = tag;
     // 뒤집으면 겉모습이 같으니 틀 위에 무엇이 들었는지 표시한다 (슈크림이 있는 날만)
     const flipped = ['side1', 'flip', 'side2', 'done', 'burnt'].includes(m.state);
-    const kindText = cfg.cream && flipped ? (m.kind === 'cream' ? '슈' : '팥') : '';
+    const kindText = cfg.cream && flipped ? (m.kind === 'cream' ? (LANG === 'en' ? 'C' : '슈') : (LANG === 'en' ? 'B' : '팥')) : '';
     if (m.kindEl.textContent !== kindText) { m.kindEl.textContent = kindText; m.kindEl.className = 'kind ' + (m.kind || ''); }
     // 다 익은 붕어빵 반짝임: 매 프레임 밝기 필터를 바꾸던 것을 CSS 애니메이션(.ready)으로 (그래픽 칩이 처리)
     if (m.el.classList.contains('ready') !== (m.state === 'done')) m.el.classList.toggle('ready', m.state === 'done');

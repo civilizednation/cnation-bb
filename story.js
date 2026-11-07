@@ -567,17 +567,18 @@ const Story = (() => {
   }
   function renderRanks(board, ranks, isMe) {
     const sub = (r) => board === 'story'
-      ? `${escapeHtml(r.ending || '')} · 만족도 ${r.sat}% · ${r.date}`
-      : [Number.isFinite(r.net) ? `순이익 ${won(r.net)}` : '', Number.isFinite(r.sat) ? `만족도 ${r.sat}%` : '', r.date || ''].filter(Boolean).join(' · ');
+      ? `${escapeHtml(tr(r.ending || ''))} · ${tr(`만족도 ${r.sat}%`)} · ${r.date}`
+      : [Number.isFinite(r.net) ? tr(`순이익 ${won(r.net)}`) : '', Number.isFinite(r.sat) ? tr(`만족도 ${r.sat}%`) : '', r.date || ''].filter(Boolean).join(' · ');
     const empty = rankScope === 'online' ? '아직 전체 기록이 없어요. 첫 기록의 주인공이 되어 보세요!'
       : `아직 기록이 없어요. ${board === 'story' ? '스토리 모드를 끝까지 해 보세요!' : '3분 챌린지에 도전해 보세요!'}`;
-    $s('rank-list').innerHTML = ranks.length
+    // 남이 쓴 이름은 번역하지 않게 I18N.raw로 넣는다 (고정 글자만 tr)
+    I18N.raw($s('rank-list'), ranks.length
       ? ranks.map((r, i) => `<div class="rank-row ${isMe(r, i) ? 'me' : ''}">
           <span class="rank-no">${i + 1}</span>
-          <span class="rank-name">${escapeHtml(r.name)}${r.retry ? ' <small>(다시 하기 사용)</small>' : ''}<small>${sub(r)}</small></span>
-          <b>${board === 'story' ? won(r.money) : `${r.money.toLocaleString()}점`}</b>
+          <span class="rank-name">${escapeHtml(r.name)}${r.retry ? ` <small>${tr('(다시 하기 사용)')}</small>` : ''}<small>${sub(r)}</small></span>
+          <b>${tr(board === 'story' ? won(r.money) : `${r.money.toLocaleString()}점`)}</b>
         </div>`).join('')
-      : `<p class="rank-empty">${empty}</p>`;
+      : `<p class="rank-empty">${tr(empty)}</p>`);
   }
   // 내 기기에 저장한 기록을 전체 랭킹에도 올린다. 실패하면 내 기기 기록을 보여 준다
   function submitRank(board, entry, localAt) {
@@ -656,6 +657,7 @@ const Story = (() => {
     return Math.random() < cfg.creamRatio ? { bean: 0, cream: n } : { bean: n, cream: 0 };
   }
   function orderPhrase(o) {
+    if (LANG === 'en') return enOrder(o, cfg.cream);
     if (o.any) return `아무거나 ${o.any}개`;   // 윤이 아빠
     if (o.bean && o.cream) return `팥 ${o.bean}개랑 슈크림 ${o.cream}개`;
     if (o.cream) return `슈크림 ${o.cream}개`;
@@ -663,6 +665,7 @@ const Story = (() => {
   }
   // 주문표: 뒤 손님은 주문 전체, 맨 앞 손님은 남은 개수 (다 받은 종류는 ✓)
   function countText(o, left) {
+    if (LANG === 'en') return enCount(o, left);
     if (o.any) return `아무거나 ${left ? (left.any || '✓') : o.any}`;
     const parts = [];
     if (o.bean) parts.push(`팥${left ? (left.bean || '✓') : o.bean}`);
@@ -732,6 +735,8 @@ const Story = (() => {
       leaveLine: '허허… 올해는 선물을 못 주겠구나…',
       thanks: '호호호! 올해 최고의 선물이구나! 자, 내 선물도 받게!' },
   };
+  // 영어: 이름·대사를 i18n.js의 영어로 바꾼다 (규칙 숫자는 그대로)
+  if (LANG === 'en') for (const id in EN_SPECIALS) Object.assign(SPECIALS[id], EN_SPECIALS[id]);
   // 마지막 러시 (v1.5.18): Day 15 산타가 떠난 뒤 남은 시간은 손님이 더 자주 오고(간격 ×0.7) 덜 기다린다(인내심 ×0.85)
   const RUSH = { gap: 0.7, patience: 0.85 };
   function startRush() {
@@ -838,6 +843,7 @@ const Story = (() => {
     return bagPerfect.shift();
   }
   function dumText(d) {
+    if (LANG === 'en') return enOrder({ bean: d.bean, cream: d.cream }, true);
     const parts = [];
     if (d.bean) parts.push(`팥 ${d.bean}개`);
     if (d.cream) parts.push(`슈크림 ${d.cream}개`);
@@ -856,7 +862,7 @@ const Story = (() => {
       takeBread(kind);
       e.dum[kind]++;
       today.dum++;
-      setBubble(`<b>${dumText(e.dum)} 덤으로 주셨네요! 고마워요!</b>`);
+      setBubble(LANG === 'en' ? `<b>${dumText(e.dum)} extra for free? Thank you!</b>` : `<b>${dumText(e.dum)} 덤으로 주셨네요! 고마워요!</b>`);
       return;
     }
     if (e.state !== 'wait') return;
@@ -890,8 +896,9 @@ const Story = (() => {
       if (e.sp === 'grandpa') {
         // 틀리면 단골 주문을 알려 준다
         e.hide = false;
-        setBubble(`<span style="color:#c0392b">허허, 그게 아니지. <span class="n">${orderPhrase(e.order)}</span>일세.</span>`);
-        e.line = `늘 먹던 걸로… <span class="n">${orderPhrase(e.order)}</span>일세.`;
+        const usual = `<span class="n">${orderPhrase(e.order)}</span>`;
+        setBubble(LANG === 'en' ? `<span style="color:#c0392b">Heh, not that. It's ${usual}.</span>` : `<span style="color:#c0392b">허허, 그게 아니지. ${usual}일세.</span>`);
+        e.line = LANG === 'en' ? `The usual… ${usual}, please.` : `늘 먹던 걸로… ${usual}일세.`;
         e.restoreAt = elapsed + 1.6;
       } else {
         if (wsp && wsp.couple) e.img.src = (customerImgCache[e.def.id + '-sad'] || e.img).src;   // 커플은 바로 화난다
@@ -911,11 +918,13 @@ const Story = (() => {
       const n = e.left[left];
       e.left[left] = 0; e.order[left] -= n;
       e.left[other] += n; e.order[other] += n;
-      msg = `아니다! 남은 건 <span class="n">${other === 'cream' ? '슈크림' : '팥'}</span>으로 바꿀래요!`;
+      msg = LANG === 'en' ? `Wait! Make the rest <span class="n">${other === 'cream' ? 'custard' : 'red bean'}</span>!`
+        : `아니다! 남은 건 <span class="n">${other === 'cream' ? '슈크림' : '팥'}</span>으로 바꿀래요!`;
     } else {
       const k = addOnly ? (cfg.cream && Math.random() < 0.5 ? 'cream' : 'bean') : left;
       e.left[k] += 1; e.order[k] += 1;
-      msg = `아 맞다! 친구 것까지 <span class="n">${k === 'cream' && cfg.cream ? '슈크림 ' : cfg.cream ? '팥 ' : ''}하나 더</span>요!`;
+      msg = LANG === 'en' ? `Oh right! <span class="n">One more${k === 'cream' && cfg.cream ? ' custard' : cfg.cream ? ' red bean' : ''}</span> for my friend!`
+        : `아 맞다! 친구 것까지 <span class="n">${k === 'cream' && cfg.cream ? '슈크림 ' : cfg.cream ? '팥 ' : ''}하나 더</span>요!`;
     }
     setBubble(msg);
     e.line = msg;

@@ -116,14 +116,14 @@ pip install "fonttools[woff]" brotli
 for w in Regular Bold; do
   curl -sS -o Dongle-$w.ttf "https://raw.githubusercontent.com/google/fonts/main/ofl/dongle/Dongle-$w.ttf"
 done
-UNICODES="U+0020-007E,U+00A0,U+AC00-D7A3,U+00B7,U+00D7,U+2013-2014,U+2018-2019,U+201C-201D,U+2022,U+2026,U+203A,U+2190,U+2192,U+2194,U+2302"
+UNICODES="U+0020-007E,U+00A0,U+AC00-D7A3,U+00B7,U+00D7,U+2013-2014,U+2018-2019,U+201C-201D,U+2022,U+2026,U+203A,U+2190,U+2192,U+2194,U+2302,U+20A9"
 for w in Regular Bold; do
   python3 -m fontTools.subset Dongle-$w.ttf --unicodes="$UNICODES" --flavor=woff2 \
     --output-file=fonts/Dongle-$w.woff2 --layout-features='*' --drop-tables+=DSIG
 done
 ```
 
-문자 범위는 cnation 폰트 조합 #1(IBM Plex Sans KR)과 같습니다. 한글 완성형 11,172자를 모두 넣어서, 앞으로 어떤 한글이 추가돼도 다시 만들 필요가 없습니다. 이모지는 넣지 않습니다(기기의 이모지 글꼴로 나옵니다).
+문자 범위는 cnation 폰트 조합 #1(IBM Plex Sans KR)과 같습니다. 영어 화면(v1.6.0)의 원화 기호 `₩`(U+20A9)는 나중에 더했습니다: 저장소의 세 woff2에는 같은 글꼴의 latin-ext 조각(@fontsource/dongle, @fontsource/ibm-plex-sans-kr)에서 그 글자 하나만 옮겨 넣었습니다. 한글 완성형 11,172자를 모두 넣어서, 앞으로 어떤 한글이 추가돼도 다시 만들 필요가 없습니다. 이모지는 넣지 않습니다(기기의 이모지 글꼴로 나옵니다).
 
 | 파일 | 원본 | 서브셋 후 | 절감률 |
 |---|---|---|---|

@@ -4,7 +4,7 @@
 
 게임 이름은 어디서나 **"cnation 붕어빵 타이쿤"**으로 씁니다. 홈 화면 아이콘 이름만 **"cnation 붕어빵"**입니다(`index.html`의 `apple-mobile-web-app-title`, `manifest.webmanifest`의 `short_name`).
 
-빌드 없는 정적 웹 게임입니다(`index.html` · `style.css` · `game.js` · `version.js`). 로컬 확인은 `python3 -m http.server`로 합니다. 윈도우에서는 `로컬실행.bat`을 더블클릭하면 서버를 띄우고 브라우저로 엽니다(index.html을 바로 열면 `file://`이라 브라우저가 woff2 글씨체·음악 fetch를 막아서 화면이 달라짐).
+빌드 없는 정적 웹 게임입니다(`index.html` · `style.css` · `i18n.js` · `game.js` · `story.js` · `version.js`). 로컬 확인은 `python3 -m http.server`로 합니다. 윈도우에서는 `로컬실행.bat`을 더블클릭하면 서버를 띄우고 브라우저로 엽니다(index.html을 바로 열면 `file://`이라 브라우저가 woff2 글씨체·음악 fetch를 막아서 화면이 달라짐).
 
 ## 버전 규칙 (꼭 지키기)
 
@@ -23,7 +23,7 @@
 - 게임에 영향이 없는 변경(문서, 이 파일, 저장소 설정)만 있을 때는 올리지 않습니다.
 - 업데이트 기록은 개발 용어 대신 **플레이어가 이해할 수 있는 말**로 씁니다.
 - 날짜는 머지하는 날짜입니다.
-- 버전을 올릴 때 `index.html`의 `style.css`·`version.js`·`online.js`·`game.js`·`story.js` 주소 끝 `?v=` 값도 **같은 버전으로** 바꿉니다. 홈 화면에 추가한 아이폰 앱이 예전 파일을 섞어 쓰지 않게 하려는 것입니다(`vercel.json`에서 html·js·css는 `no-cache`).
+- 버전을 올릴 때 `index.html`의 `style.css`·`i18n.js`·`version.js`·`online.js`·`game.js`·`story.js` 주소 끝 `?v=` 값도 **같은 버전으로** 바꿉니다. 홈 화면에 추가한 아이폰 앱이 예전 파일을 섞어 쓰지 않게 하려는 것입니다(`vercel.json`에서 html·js·css는 `no-cache`).
 
 ## 그 밖의 규칙
 
@@ -35,3 +35,4 @@
 - 손님 만족도 규칙(`SAT`, `satAdd`, `satServeDelta`)은 `game.js`에 하나만 두고 스토리 모드와 3분 챌린지가 같이 씁니다. 3분 챌린지는 1분마다 단계가 바뀝니다(`CH_STAGES`: 굽는 시간·인내심·주문 개수·손님 간격·팁·음악 빠르기). 3분 챌린지도 스토리와 같은 줄 서기 코드(`story.js`의 Q, `Story.beginChallenge`/`endChallenge`)를 쓰고, 줄 길이는 `CHALLENGE.capacity(지난 초)`입니다(0~20초 1명, ~60초 2명, ~120초 3명, 그 뒤 5명). 줄 선 손님 그림은 밑단을 모두 계산대에 붙입니다(`SLOTS`의 `up: 0`, 반신 그림의 잘린 부분을 계산대가 가림).
 - 랭킹은 기기 안에 세 가지로 따로 저장합니다: 스토리 모드(엔딩 때 가진 돈) · 3분 챌린지 팥 · 3분 챌린지 팥 & 슈크림(`game.js`의 `Ranks`, 각 10위까지). 3분 챌린지는 v1.5.3부터 **최종 점수 = 순이익 × 만족도 배수(0.5 + 만족도/100)**로 매기고, 그래서 저장 이름이 `-v2`입니다(랭킹의 `money` 칸에 점수, `net`에 순이익, `sat`에 만족도).
 - 온라인 랭킹은 `online.js`입니다. cnation-jgame과 같은 Firebase 프로젝트 `cnation-project`의 Firestore에 판별 컬렉션 `cnation-bb-rank-story`·`cnation-bb-rank-bean-v2`·`cnation-bb-rank-mix-v2`로 **기록을 한 건씩** 추가합니다(SDK 없이 REST API). 프로젝트 규칙은 따로 바꾸지 않고 기존 규칙(모든 컬렉션 열림)을 그대로 씁니다. 다른 앱과 같은 프로젝트에 **컬렉션만 추가**하는 방식입니다. 나중에 막고 싶으면 `docs/firestore.rules`의 붕어빵 블록을 쓰면 됩니다(지금은 적용 안 함). 받은 이름은 반드시 `escapeHtml`로 글자로만 넣습니다. 테스트에서는 Firestore 요청을 가짜로 바꿔서(`page.route`) 실제 랭킹에 시험 기록이 올라가지 않게 합니다.
+- 한국어/영어는 `i18n.js`입니다. 타이틀 화면의 언어 버튼(`#lang-btn`, 소리 버튼 왼쪽)으로 고르고 기기에 저장합니다(`cnation-bb-lang`, 바꾸면 새로 불러옴). 영어일 때는 `textContent`·`innerHTML`에 넣는 한국어를 넣는 순간 영어로 바꿉니다: `EN` 사전(그대로 찾기) → `RULES`(숫자가 들어간 문장) → ` · `·` → `·줄바꿈으로 나눠 다시 찾기. **게임에 한국어 문장(화면 글, 대사, 업데이트 기록 포함)을 새로 넣거나 바꾸면 `i18n.js`의 `EN`(숫자가 들어가면 `RULES`)에 영어도 같이 넣습니다.** 손님 대사는 `EN_LINES`(동물)·`EN_SPECIALS`(사람 손님 이름·대사)이고, 주문 말은 `enOrder`·`enCount`입니다. 남이 쓴 이름(랭킹)은 번역되지 않게 `I18N.raw`로 넣습니다. 확인할 때는 `window.I18N_DEBUG = true`로 열면 번역이 없는 문장이 콘솔에 나옵니다. 돈은 영어에서 `₩1,000`으로 씁니다(글꼴에 `₩`를 넣어 둠, `docs/cnation-font-dongle.md`).
