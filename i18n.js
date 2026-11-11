@@ -12,6 +12,8 @@ const I18N = (() => {
   const HANGUL = /[가-힣]/;
   const norm = (s) => s.replace(/\s+/g, ' ').trim();
   const EN = {
+"타이틀 화면의 언어 버튼을 [한 | EN] 스위치로 바꿨어요. 지금 쓰는 언어 쪽이 진하게 표시되고, 다른 쪽을 누르면 언어가 바뀌어요": "The language button on the title screen is now a [한 | EN] switch. The language in use is highlighted; tap the other side to switch",
+"언어 바꾸기 (한국어 / English)": "Change language (한국어 / English)",
 "cnation 붕어빵 타이쿤": "cnation Fish Bread Tycoon",
 "손님 만족도": "Satisfaction",
 "일시정지": "Pause",

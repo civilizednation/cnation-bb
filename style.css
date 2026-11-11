@@ -406,15 +406,27 @@ img { -webkit-user-drag: none; }
   font-size: 18px;
   line-height: 36px;
 }
-.title-lang {   /* 소리 버튼 왼쪽: 한국어일 때 EN, 영어일 때 한 */
+.title-lang {   /* 소리 버튼 왼쪽: [한 | EN] 스위치, 지금 언어 쪽이 진하다 */
   position: absolute;
   top: 14px; right: 58px;
-  width: 36px; height: 36px;
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 36px;
-  color: #6b3a12;
+  display: flex;
+  height: 36px;
+  padding: 3px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .25);
 }
+.title-lang span {
+  width: 34px; height: 30px;
+  border-radius: 15px;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 30px;
+  text-align: center;
+  color: rgba(107, 58, 18, .4);
+  transition: background .15s, color .15s;
+}
+.title-lang span.on { background: #6b3a12; color: #fff; }
 .title-bread {
   width: 150px;
   filter: drop-shadow(0 6px 0 rgba(120, 60, 20, .25));

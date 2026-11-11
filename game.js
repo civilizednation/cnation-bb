@@ -456,8 +456,11 @@ $('r-save').addEventListener('click', () => { $('r-save').disabled = true; saveC
 $('help-btn').addEventListener('click', () => $('help').classList.remove('hidden'));
 $('help-close').addEventListener('click', () => $('help').classList.add('hidden'));
 // 언어 바꾸기: 기기에 저장하고 새로 불러온다 (i18n.js)
-$('lang-btn').textContent = LANG === 'en' ? '한' : 'EN';
-$('lang-btn').addEventListener('click', () => {
+// [한 | EN] 스위치: 지금 언어 쪽을 진하게. 다른 쪽(또는 가운데)을 누르면 바뀐다
+document.querySelectorAll('#lang-btn span').forEach((s) => s.classList.toggle('on', s.dataset.lang === LANG));
+$('lang-btn').addEventListener('click', (e) => {
+  const want = e.target.dataset && e.target.dataset.lang;
+  if (want === LANG) return;   // 이미 고른 언어를 누르면 그대로
   try { localStorage.setItem('cnation-bb-lang', LANG === 'en' ? 'ko' : 'en'); } catch { /* 무시 */ }
   location.reload();
 });
