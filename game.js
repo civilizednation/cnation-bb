@@ -44,7 +44,7 @@ const CHALLENGE_MIX = Object.assign({}, CHALLENGE, { variant: 'mix', cream: true
 
 // 주문 {bean, cream}을 말로: "2개" / "팥 2개" / "슈크림 1개" / "팥 2개랑 슈크림 1개"
 function orderPhrase(o, withKind) {
-  if (LANG === 'en') return enOrder(o, withKind);
+  if (LANG !== 'ko') return trOrder(o, withKind);
   if (o.any) return `아무거나 ${o.any}개`;   // 윤이 아빠: 종류 상관없이
   if (o.bean && o.cream) return `팥 ${o.bean}개랑 슈크림 ${o.cream}개`;
   if (o.cream) return `슈크림 ${o.cream}개`;
@@ -52,7 +52,7 @@ function orderPhrase(o, withKind) {
 }
 // 남은 개수 표시: "팥2 · 슈1", 다 받은 종류는 ✓ (hide: 개수를 숨기고 ?)
 function countText(o, left, hide) {
-  if (LANG === 'en') return enCount(o, left, hide);
+  if (LANG !== 'ko') return trCount(o, left, hide);
   if (o.any) return `아무거나 ${left.any || '✓'}`;
   const parts = [];
   if (o.bean) parts.push(`팥${hide && left.bean ? '?' : left.bean || '✓'}`);
@@ -263,7 +263,7 @@ const CUSTOMERS = [
     '나무 위에서 냄새 맡고 왔어요. {n}요!',
   ] },
 ];
-if (LANG === 'en') CUSTOMERS.forEach((c) => { if (EN_LINES[c.id]) c.lines = EN_LINES[c.id]; });   // 영어 대사 (i18n.js)
+if (I18N_LINES) CUSTOMERS.forEach((c) => { if (I18N_LINES[c.id]) c.lines = I18N_LINES[c.id]; });   // 영어·중국어 대사 (i18n.js)
 // 그 손님의 대사 하나를 고른다 (바로 전에 한 대사는 빼고)
 const lastLine = {};
 function pickLine(def) {
@@ -456,12 +456,12 @@ $('r-save').addEventListener('click', () => { $('r-save').disabled = true; saveC
 $('help-btn').addEventListener('click', () => $('help').classList.remove('hidden'));
 $('help-close').addEventListener('click', () => $('help').classList.add('hidden'));
 // 언어 바꾸기: 기기에 저장하고 새로 불러온다 (i18n.js)
-// [한 | EN] 스위치: 지금 언어 쪽을 진하게. 다른 쪽(또는 가운데)을 누르면 바뀐다
+// [한 | EN | 中] 스위치: 지금 언어 쪽을 진하게. 다른 언어를 누르면 바뀐다
 document.querySelectorAll('#lang-btn span').forEach((s) => s.classList.toggle('on', s.dataset.lang === LANG));
 $('lang-btn').addEventListener('click', (e) => {
   const want = e.target.dataset && e.target.dataset.lang;
-  if (want === LANG) return;   // 이미 고른 언어를 누르면 그대로
-  try { localStorage.setItem('cnation-bb-lang', LANG === 'en' ? 'ko' : 'en'); } catch { /* 무시 */ }
+  if (!want || want === LANG) return;   // 이미 고른 언어(또는 틈)를 누르면 그대로
+  try { localStorage.setItem('cnation-bb-lang', want); } catch { /* 무시 */ }
   location.reload();
 });
 $('history-btn').addEventListener('click', () => $('history').classList.remove('hidden'));
@@ -989,7 +989,7 @@ function render() {
     if (tag && m.tag.textContent !== tag) m.tag.textContent = tag;
     // 뒤집으면 겉모습이 같으니 틀 위에 무엇이 들었는지 표시한다 (슈크림이 있는 날만)
     const flipped = ['side1', 'flip', 'side2', 'done', 'burnt'].includes(m.state);
-    const kindText = cfg.cream && flipped ? (m.kind === 'cream' ? (LANG === 'en' ? 'C' : '슈') : (LANG === 'en' ? 'B' : '팥')) : '';
+    const kindText = cfg.cream && flipped ? (m.kind === 'cream' ? pick3('슈', 'C', '奶') : pick3('팥', 'B', '豆')) : '';
     if (m.kindEl.textContent !== kindText) { m.kindEl.textContent = kindText; m.kindEl.className = 'kind ' + (m.kind || ''); }
     // 다 익은 붕어빵 반짝임: 매 프레임 밝기 필터를 바꾸던 것을 CSS 애니메이션(.ready)으로 (그래픽 칩이 처리)
     if (m.el.classList.contains('ready') !== (m.state === 'done')) m.el.classList.toggle('ready', m.state === 'done');
@@ -1109,6 +1109,7 @@ function startLoading() {
     loadBgm(nextGameTrack),
     // 게임 전용 폰트 두 굵기 (받기 전에 화면이 기본 폰트로 그려졌다 바뀌지 않게)
     ...(document.fonts ? [400, 700].map((w) => document.fonts.load(`${w} 16px Dongle`, '붕어빵')) : []),
+    ...(document.fonts && LANG === 'zh' ? [document.fonts.load('400 16px "BB ZH"', '鲫鱼饼')] : []),   // 중국어 글꼴 (i18n.js)
   ];
   let done = 0;
   const step = () => {
@@ -1128,6 +1129,7 @@ function startLoading() {
     GAME_TRACKS.forEach(loadBgm);   // 나머지 장사 음악은 뒤에서 받아 둔다
     // 게임 방법·업데이트 기록의 긴 글 폰트도 뒤에서 받아 둔다 (열기 전에 받아져 있게)
     if (document.fonts) document.fonts.load('400 13px "IBM Plex Sans KR"', '붕어빵').catch(() => {});
+    if (document.fonts && LANG === 'zh') document.fonts.load('400 13px "BB ZH Text"', '鲫鱼饼').catch(() => {});
   });
 }
 $('loading').addEventListener('click', () => {

@@ -657,7 +657,7 @@ const Story = (() => {
     return Math.random() < cfg.creamRatio ? { bean: 0, cream: n } : { bean: n, cream: 0 };
   }
   function orderPhrase(o) {
-    if (LANG === 'en') return enOrder(o, cfg.cream);
+    if (LANG !== 'ko') return trOrder(o, cfg.cream);
     if (o.any) return `아무거나 ${o.any}개`;   // 윤이 아빠
     if (o.bean && o.cream) return `팥 ${o.bean}개랑 슈크림 ${o.cream}개`;
     if (o.cream) return `슈크림 ${o.cream}개`;
@@ -665,7 +665,7 @@ const Story = (() => {
   }
   // 주문표: 뒤 손님은 주문 전체, 맨 앞 손님은 남은 개수 (다 받은 종류는 ✓)
   function countText(o, left) {
-    if (LANG === 'en') return enCount(o, left);
+    if (LANG !== 'ko') return trCount(o, left);
     if (o.any) return `아무거나 ${left ? (left.any || '✓') : o.any}`;
     const parts = [];
     if (o.bean) parts.push(`팥${left ? (left.bean || '✓') : o.bean}`);
@@ -736,7 +736,7 @@ const Story = (() => {
       thanks: '호호호! 올해 최고의 선물이구나! 자, 내 선물도 받게!' },
   };
   // 영어: 이름·대사를 i18n.js의 영어로 바꾼다 (규칙 숫자는 그대로)
-  if (LANG === 'en') for (const id in EN_SPECIALS) Object.assign(SPECIALS[id], EN_SPECIALS[id]);
+  if (I18N_SPECIALS) for (const id in I18N_SPECIALS) Object.assign(SPECIALS[id], I18N_SPECIALS[id]);
   // 마지막 러시 (v1.5.18): Day 15 산타가 떠난 뒤 남은 시간은 손님이 더 자주 오고(간격 ×0.7) 덜 기다린다(인내심 ×0.85)
   const RUSH = { gap: 0.7, patience: 0.85 };
   function startRush() {
@@ -843,7 +843,7 @@ const Story = (() => {
     return bagPerfect.shift();
   }
   function dumText(d) {
-    if (LANG === 'en') return enOrder({ bean: d.bean, cream: d.cream }, true);
+    if (LANG !== 'ko') return trOrder({ bean: d.bean, cream: d.cream }, true);
     const parts = [];
     if (d.bean) parts.push(`팥 ${d.bean}개`);
     if (d.cream) parts.push(`슈크림 ${d.cream}개`);
@@ -862,7 +862,7 @@ const Story = (() => {
       takeBread(kind);
       e.dum[kind]++;
       today.dum++;
-      setBubble(LANG === 'en' ? `<b>${dumText(e.dum)} extra for free? Thank you!</b>` : `<b>${dumText(e.dum)} 덤으로 주셨네요! 고마워요!</b>`);
+      setBubble(pick3(`<b>${dumText(e.dum)} 덤으로 주셨네요! 고마워요!</b>`, `<b>${dumText(e.dum)} extra for free? Thank you!</b>`, `<b>多送了${dumText(e.dum)}？谢谢！</b>`));
       return;
     }
     if (e.state !== 'wait') return;
@@ -897,8 +897,8 @@ const Story = (() => {
         // 틀리면 단골 주문을 알려 준다
         e.hide = false;
         const usual = `<span class="n">${orderPhrase(e.order)}</span>`;
-        setBubble(LANG === 'en' ? `<span style="color:#c0392b">Heh, not that. It's ${usual}.</span>` : `<span style="color:#c0392b">허허, 그게 아니지. ${usual}일세.</span>`);
-        e.line = LANG === 'en' ? `The usual… ${usual}, please.` : `늘 먹던 걸로… ${usual}일세.`;
+        setBubble(`<span style="color:#c0392b">${pick3(`허허, 그게 아니지. ${usual}일세.`, `Heh, not that. It's ${usual}.`, `呵呵，不是这个。是${usual}。`)}</span>`);
+        e.line = pick3(`늘 먹던 걸로… ${usual}일세.`, `The usual… ${usual}, please.`, `老样子… ${usual}。`);
         e.restoreAt = elapsed + 1.6;
       } else {
         if (wsp && wsp.couple) e.img.src = (customerImgCache[e.def.id + '-sad'] || e.img).src;   // 커플은 바로 화난다
@@ -918,13 +918,16 @@ const Story = (() => {
       const n = e.left[left];
       e.left[left] = 0; e.order[left] -= n;
       e.left[other] += n; e.order[other] += n;
-      msg = LANG === 'en' ? `Wait! Make the rest <span class="n">${other === 'cream' ? 'custard' : 'red bean'}</span>!`
-        : `아니다! 남은 건 <span class="n">${other === 'cream' ? '슈크림' : '팥'}</span>으로 바꿀래요!`;
+      const kind = other === 'cream' ? pick3('슈크림', 'custard', '奶油') : pick3('팥', 'red bean', '红豆');
+      msg = pick3(`아니다! 남은 건 <span class="n">${kind}</span>으로 바꿀래요!`, `Wait! Make the rest <span class="n">${kind}</span>!`,
+        `不对！剩下的换成<span class="n">${kind}</span>！`);
     } else {
       const k = addOnly ? (cfg.cream && Math.random() < 0.5 ? 'cream' : 'bean') : left;
       e.left[k] += 1; e.order[k] += 1;
-      msg = LANG === 'en' ? `Oh right! <span class="n">One more${k === 'cream' && cfg.cream ? ' custard' : cfg.cream ? ' red bean' : ''}</span> for my friend!`
-        : `아 맞다! 친구 것까지 <span class="n">${k === 'cream' && cfg.cream ? '슈크림 ' : cfg.cream ? '팥 ' : ''}하나 더</span>요!`;
+      const kind = k === 'cream' && cfg.cream ? 'cream' : cfg.cream ? 'bean' : '';
+      msg = pick3(`아 맞다! 친구 것까지 <span class="n">${{ cream: '슈크림 ', bean: '팥 ', '': '' }[kind]}하나 더</span>요!`,
+        `Oh right! <span class="n">One more${{ cream: ' custard', bean: ' red bean', '': '' }[kind]}</span> for my friend!`,
+        `啊对了！朋友的份也要，<span class="n">再来一个${{ cream: '奶油', bean: '红豆', '': '' }[kind]}</span>！`);
     }
     setBubble(msg);
     e.line = msg;
